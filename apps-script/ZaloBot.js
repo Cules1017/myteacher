@@ -22,8 +22,6 @@ var ZALO_API_BASE_ = 'https://bot-api.zaloplatforms.com/bot';
 // probabilistic glitch rather than something the model gets wrong every time.
 var GEMINI_MODEL_DEFAULT_ = 'gemini-3.1-flash-lite';
 var ZALO_PENDING_TTL_SECONDS_ = 600; // 10 minutes to confirm/cancel a proposed write
-var ZALO_LIST_SHEET_THRESHOLD_ = 15; // longer read results go to a temp Sheet instead of a chat bubble
-var ZALO_TEMP_SHEET_TTL_MS_ = 60 * 60 * 1000; // 1 hour
 
 // Curated sticker ids (Zalo sticker packs) for a livelier, "gen Z" chat feel.
 var ZALO_STICKERS_ = {
@@ -343,97 +341,18 @@ function handleReadIntent_(found, intent, chatId, originalText) {
   var rows = listRows_(found.schema, found.sheet);
   rows = applyFilters_(rows, intent.filters);
 
-  // A long list crammed into one chat bubble either gets silently truncated
-  // by Gemini's phrasing pass or blown past Zalo's message length — hand the
-  // teacher a temporary Sheet link instead once it's past a skim-able size.
-  if (rows.length > ZALO_LIST_SHEET_THRESHOLD_) {
-    try {
-      sendTempSheetLink_(chatId, found.schema, rows);
-    } catch (err) {
-      // Drive sharing can fail on restricted/Workspace accounts — fall back to
-      // a plain phrased summary rather than losing the read entirely.
-      Logger.log('sendTempSheetLink_ error: ' + err);
-      sendZaloMessage_(
-        chatId,
-        '⚠️ Không tạo được Sheet để xuất (' + err + '), gửi tóm tắt thay nha:\n\n' + phraseReadResult_(originalText, intent, rows)
-      );
-    }
-    return;
-  }
+  // A temp-Sheet export used to be offered here for long lists, but it needs
+  // Drive access — which repeatedly failed to authorize on this account (the
+  // consent screen wasn't even appearing) — so it's dropped in favor of the
+  // always-available phrased summary below, which already handles large lists
+  // fine (phraseReadResult_ caps what it sends Gemini and notes the cutoff).
 
   sendZaloMessage_(chatId, phraseReadResult_(originalText, intent, rows));
 }
 
-/** Exports `rows` to a brand-new Google Sheet, shares it view-only via link,
- * schedules its deletion in ~1h, and sends the teacher the link. */
-function sendTempSheetLink_(chatId, schema, rows) {
-  var cols = schema.columns.filter(function (c) {
-    return ['id', 'createdAt', 'updatedAt'].indexOf(c.key) === -1;
-  });
-  var headers = cols.map(function (c) { return c.header; });
-  var dataRows = rows.map(function (r) {
-    return cols.map(function (c) {
-      var v = r[c.key];
-      return v === undefined || v === null ? '' : v;
-    });
-  });
-
-  var stamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'HH:mm dd/MM');
-  var ss = SpreadsheetApp.create('Ket qua tra cuu - ' + schema.sheetName + ' - ' + stamp);
-  var sheet = ss.getSheets()[0];
-  sheet.setName(schema.sheetName);
-  if (headers.length > 0) {
-    var allRows = [headers].concat(dataRows);
-    sheet.getRange(1, 1, allRows.length, headers.length).setValues(allRows);
-    sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
-    sheet.setFrozenRows(1);
-    sheet.autoResizeColumns(1, headers.length);
-  }
-
-  DriveApp.getFileById(ss.getId()).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-  scheduleTempSheetDeletion_(ss.getId());
-
-  sendZaloMessage_(
-    chatId,
-    '📄 Kết quả có ' + rows.length + ' dòng, hơi dài nên mình xuất ra Google Sheet cho dễ xem nè:\n' +
-      ss.getUrl() +
-      '\n\n⏳ Link này tự xoá sau 1 tiếng, nhớ xem sớm nha!'
-  );
-}
-
-/** Marks `fileId` for deletion ~1h from now (via script property, scanned by
- * cleanupExpiredTempSheets_) and arms a one-off trigger to run that scan. */
-function scheduleTempSheetDeletion_(fileId) {
-  var key = 'TEMP_SHEET_' + fileId;
-  var expireAt = Date.now() + ZALO_TEMP_SHEET_TTL_MS_;
-  PropertiesService.getScriptProperties().setProperty(key, String(expireAt));
-  ScriptApp.newTrigger('cleanupExpiredTempSheets_')
-    .timeBased()
-    .after(ZALO_TEMP_SHEET_TTL_MS_ + 60 * 1000)
-    .create();
-}
-
-/** Fired by the one-off triggers scheduleTempSheetDeletion_ creates. Scans
- * every pending TEMP_SHEET_* entry (not just the one this firing was for) and
- * trashes whichever have actually expired, so it's self-healing even if some
- * earlier firing didn't clean up for any reason. */
-function cleanupExpiredTempSheets_() {
-  var props = PropertiesService.getScriptProperties();
-  var all = props.getProperties();
-  var now = Date.now();
-  Object.keys(all).forEach(function (key) {
-    if (key.indexOf('TEMP_SHEET_') !== 0) return;
-    var expireAt = Number(all[key]);
-    if (!expireAt || now < expireAt) return;
-    var fileId = key.slice('TEMP_SHEET_'.length);
-    try {
-      DriveApp.getFileById(fileId).setTrashed(true);
-    } catch (err) {
-      Logger.log('cleanupExpiredTempSheets_ error: ' + err);
-    }
-    props.deleteProperty(key);
-  });
-}
+// (Temp-Sheet export + its cleanup trigger were removed here — see the note
+// in handleReadIntent_ above. They needed Drive access that wouldn't
+// authorize on this account.)
 
 function applyFilters_(rows, filters) {
   if (!filters || !filters.length) return rows;
@@ -682,12 +601,33 @@ function testGeminiKey_() {
 function sendZaloMessage_(chatId, text) {
   var botToken = getScriptProp_('ZALO_BOT_TOKEN');
   if (!botToken) return;
-  UrlFetchApp.fetch(ZALO_API_BASE_ + botToken + '/sendMessage', {
-    method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify({ chat_id: String(chatId), text: String(text).slice(0, 2000) }),
-    muteHttpExceptions: true,
-  });
+  try {
+    var res = UrlFetchApp.fetch(ZALO_API_BASE_ + botToken + '/sendMessage', {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({ chat_id: String(chatId), text: String(text).slice(0, 2000) }),
+      muteHttpExceptions: true,
+    });
+    var json = JSON.parse(res.getContentText());
+    if (!json.ok) {
+      // This was previously fire-and-forget with zero visibility — a failed
+      // send here (bad chat_id, Zalo-side error, ...) looked identical to
+      // total silence from the teacher's side. Record it so debugLastSendError
+      // can surface exactly what Zalo said instead of guessing.
+      var detail = 'HTTP ' + res.getResponseCode() + ': ' + res.getContentText();
+      Logger.log('sendZaloMessage_ failed: ' + detail);
+      setScriptProp_('LAST_SEND_ERROR', detail);
+    }
+  } catch (err) {
+    Logger.log('sendZaloMessage_ exception: ' + err);
+    setScriptProp_('LAST_SEND_ERROR', String(err));
+  }
+}
+
+/** Diagnostic: what did the last failed sendZaloMessage_ actually say from
+ * Zalo's side? (fire-and-forget sends have no other way to surface this) */
+function debugLastSendError_() {
+  return { lastSendError: getScriptProp_('LAST_SEND_ERROR') || null };
 }
 
 /** Best-effort — a failed sticker/chat-action send should never break the

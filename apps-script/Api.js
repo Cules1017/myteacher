@@ -37,6 +37,9 @@ var ROUTES = {
     debugGeminiIntent: function (ctx) {
       return debugGeminiIntent_(ctx.data);
     },
+    debugLastSendError: function (ctx) {
+      return debugLastSendError_();
+    },
   },
 };
 
