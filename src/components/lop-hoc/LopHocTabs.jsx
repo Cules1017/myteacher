@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { GraduationCap, CalendarCheck, Award, Wallet, CalendarClock } from "lucide-react";
+import { GraduationCap, CalendarCheck, Award, Wallet, CalendarClock, MessageSquare } from "lucide-react";
 
 const tabs = [
   { to: "/lop-hoc/hoc-sinh", label: "Học sinh", icon: GraduationCap },
   { to: "/lop-hoc/diem-danh", label: "Điểm danh", icon: CalendarCheck },
   { to: "/lop-hoc/diem", label: "Điểm", icon: Award },
+  { to: "/lop-hoc/nhan-xet", label: "Nhận xét", icon: MessageSquare },
   { to: "/lop-hoc/thoi-khoa-bieu", label: "Thời khoá biểu", icon: CalendarClock },
   { to: "/lop-hoc/quy-thu", label: "Quỹ thu", icon: Wallet },
 ];

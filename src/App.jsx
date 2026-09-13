@@ -9,6 +9,7 @@ import DiemDanh from "./pages/lop-hoc/DiemDanh";
 import Diem from "./pages/lop-hoc/Diem";
 import QuyThu from "./pages/lop-hoc/QuyThu";
 import ThoiKhoaBieu from "./pages/lop-hoc/ThoiKhoaBieu";
+import NhanXet from "./pages/lop-hoc/NhanXet";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/lop-hoc/hoc-sinh" element={<HocSinh />} />
           <Route path="/lop-hoc/diem-danh" element={<DiemDanh />} />
           <Route path="/lop-hoc/diem" element={<Diem />} />
+          <Route path="/lop-hoc/nhan-xet" element={<NhanXet />} />
           <Route path="/lop-hoc/quy-thu" element={<QuyThu />} />
           <Route path="/lop-hoc/thoi-khoa-bieu" element={<ThoiKhoaBieu />} />
           <Route path="/cong-viec" element={<CongViec />} />

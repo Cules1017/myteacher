@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useRef, useState } from "react";
-import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3 } from "lucide-react";
+import { Fragment, useEffect, useRef, useState, useMemo } from "react";
+import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3, Wallet, BookOpen, Check } from "lucide-react";
 import LoadingState from "../../components/LoadingState";
 import { isConfigured } from "../../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
@@ -79,9 +79,20 @@ function HocSinh() {
   } = useGetRowsQuery(TABLE, { skip: !configured });
   const error = queryError?.message;
 
+  // Data for quick modals
+  const { data: khoanthuRows } = useGetRowsQuery("khoanthu", { skip: !configured });
+  const { data: dongquyRows } = useGetRowsQuery("dongquy", { skip: !configured });
+  const { data: monhocRows } = useGetRowsQuery("monhoc", { skip: !configured });
+  const { data: cotdiemRows } = useGetRowsQuery("cotdiem", { skip: !configured });
+  const { data: diemRows } = useGetRowsQuery("diem", { skip: !configured });
+
   const [createRowMutation] = useCreateRowMutation();
   const [updateRowMutation] = useUpdateRowMutation();
   const [deleteRowMutation] = useDeleteRowMutation();
+
+  // Quick action modals
+  const [quyThuModal, setQuyThuModal] = useState(null); // { student }
+  const [nhapDiemModal, setNhapDiemModal] = useState(null); // { student }
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
@@ -387,6 +398,20 @@ function HocSinh() {
                                   Sửa
                                 </button>
                                 <button
+                                  onClick={() => setQuyThuModal({ student: row })}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-400/10 sm:rounded-full"
+                                >
+                                  <Wallet className="h-4 w-4" strokeWidth={2} />
+                                  Đóng quỹ
+                                </button>
+                                <button
+                                  onClick={() => setNhapDiemModal({ student: row })}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 transition-colors hover:bg-blue-400/10 sm:rounded-full"
+                                >
+                                  <BookOpen className="h-4 w-4" strokeWidth={2} />
+                                  Nhập điểm
+                                </button>
+                                <button
                                   onClick={() => toggleHidden(rowKey)}
                                   className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-text-base transition-colors hover:bg-surface-hover sm:rounded-full"
                                 >
@@ -433,6 +458,29 @@ function HocSinh() {
           saving={saving}
           error={formError}
           isEditing={Boolean(editingRow)}
+        />
+      )}
+
+      {quyThuModal && (
+        <QuickDongQuyModal
+          student={quyThuModal.student}
+          khoanthuRows={khoanthuRows || []}
+          dongquyRows={dongquyRows || []}
+          onClose={() => setQuyThuModal(null)}
+          createRow={createRowMutation}
+          updateRow={updateRowMutation}
+        />
+      )}
+
+      {nhapDiemModal && (
+        <QuickNhapDiemModal
+          student={nhapDiemModal.student}
+          monhocRows={monhocRows || []}
+          cotdiemRows={cotdiemRows || []}
+          diemRows={diemRows || []}
+          onClose={() => setNhapDiemModal(null)}
+          createRow={createRowMutation}
+          updateRow={updateRowMutation}
         />
       )}
     </>
@@ -542,6 +590,219 @@ function StudentFormModal({ fields, formData, setFormData, onSubmit, onClose, sa
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function QuickDongQuyModal({ student, khoanthuRows, dongquyRows, onClose, createRow, updateRow }) {
+  const paymentMap = useMemo(() => {
+    const map = new Map();
+    dongquyRows.forEach((p) => map.set(`${p.khoanThuId}__${p.hocSinhId}`, p));
+    return map;
+  }, [dongquyRows]);
+
+  const [savingId, setSavingId] = useState(null);
+
+  const handleDongDu = async (khoanthu) => {
+    setSavingId(khoanthu.id);
+    try {
+      const key = `${khoanthu.id}__${student.id}`;
+      const existing = paymentMap.get(key);
+      const data = {
+        khoanThuId: khoanthu.id,
+        hocSinhId: student.id,
+        hoVaTen: student.hoVaTen,
+        soTien: Number(khoanthu.mucThu),
+        ghiChu: "",
+        timestamp: new Date().toISOString(),
+      };
+      if (existing) {
+        await updateRow({ table: "dongquy", id: existing.id, data }).unwrap();
+      } else {
+        await createRow({ table: "dongquy", data }).unwrap();
+      }
+    } catch (e) {
+      window.alert(e.message);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-bg-base/95 p-6 shadow-2xl backdrop-blur-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-text-base">Đóng quỹ nhanh</h2>
+            <p className="text-sm text-text-muted">{student.hoVaTen}</p>
+          </div>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-hover">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {khoanthuRows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-text-muted">Chưa có khoản thu nào.</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {khoanthuRows.map((khoanthu) => {
+              const key = `${khoanthu.id}__${student.id}`;
+              const paid = paymentMap.get(key);
+              const isSaving = savingId === khoanthu.id;
+              return (
+                <div key={khoanthu.id} className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium text-text-base">{khoanthu.tenKhoanThu}</span>
+                    <span className="text-xs text-text-muted">
+                      {new Intl.NumberFormat("vi-VN").format(khoanthu.mucThu)}đ
+                    </span>
+                  </div>
+                  {paid ? (
+                    <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                      <Check className="h-3.5 w-3.5" strokeWidth={2.5} />
+                      Đã đóng
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => handleDongDu(khoanthu)}
+                      disabled={isSaving}
+                      className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-emerald-400 to-teal-500 px-3 py-1.5 text-xs font-semibold text-slate-900 disabled:opacity-60"
+                    >
+                      {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wallet className="h-3.5 w-3.5" />}
+                      Đóng đủ
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuickNhapDiemModal({ student, monhocRows, cotdiemRows, diemRows, onClose, createRow, updateRow }) {
+  const [selectedMonHocId, setSelectedMonHocId] = useState(monhocRows[0]?.id || "");
+
+  const scoreMap = useMemo(() => {
+    const map = new Map();
+    diemRows.forEach((d) => map.set(`${d.cotDiemId}__${d.hocSinhId}`, d));
+    return map;
+  }, [diemRows]);
+
+  const filteredCols = useMemo(
+    () => cotdiemRows.filter((c) => c.monHocId === selectedMonHocId),
+    [cotdiemRows, selectedMonHocId]
+  );
+
+  const [savingColId, setSavingColId] = useState(null);
+  const [localScores, setLocalScores] = useState({});
+
+  const getScore = (cotDiemId) => {
+    if (localScores[cotDiemId] !== undefined) return localScores[cotDiemId];
+    return scoreMap.get(`${cotDiemId}__${student.id}`)?.diem ?? "";
+  };
+
+  const handleSave = async (cotDiem) => {
+    const val = localScores[cotDiem.id];
+    if (val === undefined) return;
+    setSavingColId(cotDiem.id);
+    try {
+      const key = `${cotDiem.id}__${student.id}`;
+      const existing = scoreMap.get(key);
+      const data = {
+        monHocId: cotDiem.monHocId,
+        cotDiemId: cotDiem.id,
+        hocSinhId: student.id,
+        hoVaTen: student.hoVaTen,
+        diem: val === "" ? "" : Number(val),
+      };
+      if (existing) {
+        await updateRow({ table: "diem", id: existing.id, data }).unwrap();
+      } else {
+        await createRow({ table: "diem", data }).unwrap();
+      }
+      setLocalScores((prev) => { const n = { ...prev }; delete n[cotDiem.id]; return n; });
+    } catch (e) {
+      window.alert(e.message);
+    } finally {
+      setSavingColId(null);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 p-4 backdrop-blur-sm sm:items-center">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-bg-base/95 p-6 shadow-2xl backdrop-blur-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-text-base">Nhập điểm nhanh</h2>
+            <p className="text-sm text-text-muted">{student.hoVaTen}</p>
+          </div>
+          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted hover:bg-surface-hover">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {monhocRows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-text-muted">Chưa có môn học nào.</p>
+        ) : (
+          <>
+            <div className="mb-4 flex flex-wrap gap-2">
+              {monhocRows.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedMonHocId(m.id)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    selectedMonHocId === m.id
+                      ? "border-primary-400 bg-primary-400/20 text-primary-600 dark:text-primary-400"
+                      : "border-border text-text-muted hover:bg-surface-hover"
+                  }`}
+                >
+                  {m.tenMon}
+                </button>
+              ))}
+            </div>
+
+            {filteredCols.length === 0 ? (
+              <p className="py-6 text-center text-sm text-text-muted">Môn này chưa có cột điểm.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {filteredCols.map((col) => {
+                  const isSaving = savingColId === col.id;
+                  const score = getScore(col.id);
+                  const isDirty = localScores[col.id] !== undefined;
+                  return (
+                    <div key={col.id} className="flex items-center justify-between rounded-2xl border border-border bg-surface px-4 py-3">
+                      <span className="text-sm font-medium text-text-base">{col.tenCot}</span>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max="10"
+                          step="0.1"
+                          value={score}
+                          onChange={(e) => setLocalScores((prev) => ({ ...prev, [col.id]: e.target.value }))}
+                          className="w-16 rounded-lg border border-border bg-transparent px-2 py-1.5 text-center text-sm text-text-base outline-none focus:border-primary-400/50"
+                        />
+                        {isDirty && (
+                          <button
+                            onClick={() => handleSave(col)}
+                            disabled={isSaving}
+                            className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-400/20 text-primary-600 dark:text-primary-400 hover:bg-primary-400/30 disabled:opacity-50"
+                          >
+                            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" strokeWidth={2.5} />}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

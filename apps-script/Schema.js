@@ -140,6 +140,17 @@ var SCHEMAS = {
       { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
     ],
   },
+  nhanxet: {
+    sheetName: 'NhanXet',
+    columns: [
+      { key: 'id',        header: 'ID',         type: 'string' },
+      { key: 'hocSinhId', header: 'Hoc Sinh ID', type: 'string' },
+      { key: 'noiDung',   header: 'Noi Dung',    type: 'string' },
+      { key: 'phanLoai',  header: 'Phan Loai',   type: 'string' },
+      { key: 'createdAt', header: 'Created At',  type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At',  type: 'datetime' },
+    ],
+  },
   khoanthu: {
     sheetName: 'KhoanThu',
     columns: [

@@ -173,18 +173,18 @@ function StudentPaymentRow({ student, payment, column, onSave, onDelete }) {
           </div>
         ) : payment ? (
           <>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end gap-0.5">
               <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
                 Đã đóng {formatVND(payment.soTien)}đ
               </span>
-              <div className="flex items-center gap-2">
+              {payment.timestamp && (
                 <span className="text-[11px] text-text-muted">
-                  {payment.ghiChu ? payment.ghiChu : (payment.timestamp ? `lúc ${new Date(payment.timestamp).toLocaleString("vi-VN")}` : "")}
+                  🕐 {new Date(payment.timestamp).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" })}
                 </span>
-                {payment.ghiChu && payment.timestamp && (
-                   <span className="text-[10px] text-text-muted">({new Date(payment.timestamp).toLocaleString("vi-VN")})</span>
-                )}
-              </div>
+              )}
+              {payment.ghiChu && (
+                <span className="text-[11px] text-text-muted italic">📝 {payment.ghiChu}</span>
+              )}
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
