@@ -339,8 +339,8 @@ function TodoItem({ row, customTypes, onToggle, toggling, onEdit }) {
         className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
           row.hoanThanh
             ? "border-primary-400 bg-primary-400/90 text-bg-base"
-            : "border-border text-transparent hover:border-primary-400/60"
-        } disabled:opacity-50`}
+            : `border-border hover:border-primary-400/60 ${toggling ? "text-primary-600 dark:text-primary-400" : "text-transparent"}`
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
         {toggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" strokeWidth={3} />}
       </button>

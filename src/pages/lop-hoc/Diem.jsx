@@ -262,7 +262,7 @@ function Diem() {
                     <button
                       type="submit"
                       disabled={savingSubject}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-500/20 text-primary-400 transition-colors hover:bg-primary-500/30 disabled:opacity-60"
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-500/20 text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-500/30 disabled:opacity-60"
                     >
                       {savingSubject ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" strokeWidth={2.5} />}
                     </button>
@@ -323,7 +323,7 @@ function Diem() {
                           <button
                             type="submit"
                             disabled={savingColumn}
-                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500/20 text-primary-400 transition-colors hover:bg-primary-500/30 disabled:opacity-60"
+                            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-500/20 text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-500/30 disabled:opacity-60"
                           >
                             {savingColumn ? <Loader2 className="h-3 w-3 animate-spin" /> : <Plus className="h-3 w-3" strokeWidth={2.5} />}
                           </button>
@@ -348,7 +348,7 @@ function Diem() {
                     <button
                       onClick={() => handleDeleteSubject(selectedSubject)}
                       disabled={deletingSubjectId === selectedSubject.id}
-                      className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:bg-rose-500/10 hover:text-rose-400 disabled:opacity-50"
+                      className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:bg-rose-100 dark:bg-rose-500/10 hover:text-rose-600 dark:text-rose-400 disabled:opacity-50"
                     >
                       <Settings2 className="h-3.5 w-3.5" />
                       Xoá môn học

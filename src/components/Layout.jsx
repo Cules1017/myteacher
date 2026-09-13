@@ -11,7 +11,7 @@ function Layout({ children }) {
 
       <NavBar />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 pb-28 pt-10 sm:px-10 sm:pb-16 sm:pt-32">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl flex-col px-4 pb-28 pt-10 sm:px-10 sm:pb-16 sm:pt-32">
         {children}
       </div>
     </div>

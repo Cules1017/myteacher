@@ -131,8 +131,8 @@ function Calendar() {
             id: `slot-${slot.id}`,
             label: `${slot.monHoc} (T${slot.tiet})`,
             icon: BookOpen,
-            bgClass: 'bg-primary-400/20',
-            textClass: 'text-primary-300'
+            bgClass: 'bg-primary-100 dark:bg-primary-400/20',
+            textClass: 'text-primary-700 dark:text-primary-300'
           });
         });
       }
@@ -150,11 +150,11 @@ function Calendar() {
        let textClass = accentTextClass(typeInfo.accent);
        
        if (overdue) {
-         bgClass = "bg-rose-400/10 ring-1 ring-rose-400/50";
-         textClass = "text-rose-300";
+         bgClass = "bg-rose-100 dark:bg-rose-400/10 ring-1 ring-rose-400/50 dark:ring-rose-400/50";
+         textClass = "text-rose-700 dark:text-rose-300";
        } else if (dueSoon) {
-         bgClass = "bg-amber-400/10 ring-1 ring-amber-400/50";
-         textClass = "text-amber-300";
+         bgClass = "bg-amber-100 dark:bg-amber-400/10 ring-1 ring-amber-400/50 dark:ring-amber-400/50";
+         textClass = "text-amber-700 dark:text-amber-300";
        }
        
        items.push({
@@ -177,7 +177,7 @@ function Calendar() {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border bg-surface p-6 backdrop-blur-xl">
+    <div className="relative overflow-hidden rounded-3xl border border-slate-300 dark:border-border bg-surface p-6 backdrop-blur-xl">
       <div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br from-indigo-500 to-sky-400 opacity-20 blur-2xl" />
 
       <div className="relative flex items-center justify-between gap-3">
@@ -213,14 +213,14 @@ function Calendar() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowTimetable((v) => !v)}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 dark:border-border bg-transparent px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
             title={showTimetable ? "Đang hiện lịch dạy" : "Đã ẩn lịch dạy"}
           >
             {showTimetable ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
           </button>
           <button
             onClick={() => setExpanded((v) => !v)}
-            className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
+            className="flex shrink-0 items-center gap-1.5 rounded-full border border-slate-300 dark:border-border bg-transparent px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
           >
             {expanded ? "Thu gọn" : "Xem tháng"}
             <ChevronDown
@@ -239,7 +239,7 @@ function Calendar() {
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2.2} />
         </button>
-        <button onClick={goToday} className="text-xs font-medium text-primary-300 transition-colors hover:text-primary-200">
+        <button onClick={goToday} className="text-xs font-medium text-primary-700 dark:text-primary-300 transition-colors hover:text-primary-700 dark:hover:text-primary-200">
           Hôm nay
         </button>
         <button
@@ -277,7 +277,7 @@ function Calendar() {
                   const items = getDayItems(d);
                   
                   return (
-                    <div key={d.toISOString()} className={`flex flex-col border border-border rounded-xl p-1.5 transition-colors ${inMonth ? 'bg-white/[0.02]' : 'opacity-40'} ${expanded ? 'min-h-[100px]' : 'min-h-[140px]'}`}>
+                    <div key={d.toISOString()} className={`flex flex-col border border-slate-300 dark:border-border rounded-xl p-1.5 transition-colors ${inMonth ? 'bg-slate-50 dark:bg-white/[0.02]' : 'opacity-40'} ${expanded ? 'min-h-[100px]' : 'min-h-[140px]'}`}>
                       <div className="flex justify-center mb-1">
                         <span
                           title={holiday?.tieuDe || undefined}
@@ -285,10 +285,8 @@ function Calendar() {
                             isToday
                               ? "bg-gradient-to-br from-primary-400 to-blue-500 font-semibold text-slate-900"
                               : holiday
-                                ? "bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/30"
-                                : inMonth
-                                  ? "text-white"
-                                  : "text-slate-600"
+                                ? "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-1 ring-blue-300 dark:ring-blue-400/30"
+                                : inMonth ? "text-text-base" : "text-text-muted"
                           }`}
                         >
                           {d.getDate()}
@@ -341,7 +339,7 @@ function DayModal({ date, items, onClose }) {
   
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-sm rounded-3xl border border-border bg-bg-base/95 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
+      <div className="w-full max-w-sm rounded-3xl border border-slate-300 dark:border-border bg-bg-base/95 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
         <div className="flex items-start justify-between mb-4">
           <h2 className="text-lg font-semibold text-text-base">Ngày {dateStr}</h2>
           <button

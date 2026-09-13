@@ -56,7 +56,7 @@ function ConfirmModal({
         <div className="relative flex flex-col gap-4">
           {/* Header */}
           <div className="flex items-start gap-4">
-            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${isDangerous ? 'border-rose-500/20 bg-rose-500/10 text-rose-400' : 'border-primary-500/20 bg-primary-500/10 text-primary-400'}`}>
+            <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${isDangerous ? 'border-rose-500/20 bg-rose-100 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400' : 'border-primary-500/20 bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400'}`}>
               <AlertTriangle className="h-6 w-6" strokeWidth={2} />
             </div>
             <div className="pt-1.5">

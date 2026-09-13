@@ -60,13 +60,13 @@ export function getTypeIcon(iconKey) {
 export const ACCENT_OPTIONS = ["indigo", "amber", "emerald", "sky", "fuchsia", "rose", "slate"];
 
 const BADGE_CLASSES = {
-  indigo: "border-indigo-400/30 bg-indigo-400/10 text-indigo-300",
-  amber: "border-amber-400/30 bg-amber-400/10 text-amber-300",
-  emerald: "border-primary-400/30 bg-primary-400/10 text-primary-300",
-  sky: "border-sky-400/30 bg-sky-400/10 text-sky-300",
-  fuchsia: "border-fuchsia-400/30 bg-fuchsia-400/10 text-fuchsia-300",
-  rose: "border-rose-400/30 bg-rose-400/10 text-rose-300",
-  slate: "border-slate-400/30 bg-slate-400/10 text-text-base",
+  indigo: "border--300 dark:border--400/30 bg--100 dark:bg--400/10 text--700 dark:text--300",
+  amber: "border--300 dark:border--400/30 bg--100 dark:bg--400/10 text--700 dark:text--300",
+  emerald: "border--300 dark:border--400/30 bg--100 dark:bg--400/10 text--700 dark:text--300",
+  sky: "border--300 dark:border--400/30 bg--100 dark:bg--400/10 text--700 dark:text--300",
+  fuchsia: "border--300 dark:border--400/30 bg--100 dark:bg--400/10 text--700 dark:text--300",
+  rose: "border--300 dark:border--400/30 bg--100 dark:bg--400/10 text--700 dark:text--300",
+  slate: "border-slate-300 dark:border-slate-400/30 bg-slate-100 dark:bg-slate-400/10 text-text-base",
 };
 
 const DOT_CLASSES = {
@@ -94,13 +94,13 @@ export function accentSwatchClass(accent) {
 }
 
 const SWATCH_SOFT_CLASSES = {
-  indigo: "bg-indigo-400/20",
-  amber: "bg-amber-400/20",
-  emerald: "bg-primary-400/20",
-  sky: "bg-sky-400/20",
-  fuchsia: "bg-fuchsia-400/20",
-  rose: "bg-rose-400/20",
-  slate: "bg-slate-400/20",
+  indigo: "bg--100 dark:bg--400/20",
+  amber: "bg--100 dark:bg--400/20",
+  emerald: "bg--100 dark:bg--400/20",
+  sky: "bg--100 dark:bg--400/20",
+  fuchsia: "bg--100 dark:bg--400/20",
+  rose: "bg--100 dark:bg--400/20",
+  slate: "bg--100 dark:bg--400/20",
 };
 
 export function accentSoftClass(accent) {
@@ -108,12 +108,12 @@ export function accentSoftClass(accent) {
 }
 
 const TEXT_CLASSES = {
-  indigo: "text-indigo-300",
-  amber: "text-amber-300",
-  emerald: "text-primary-300",
-  sky: "text-sky-300",
-  fuchsia: "text-fuchsia-300",
-  rose: "text-rose-300",
+  indigo: "text--700 dark:text--300",
+  amber: "text--700 dark:text--300",
+  emerald: "text--700 dark:text--300",
+  sky: "text--700 dark:text--300",
+  fuchsia: "text--700 dark:text--300",
+  rose: "text--700 dark:text--300",
   slate: "text-text-base",
 };
 

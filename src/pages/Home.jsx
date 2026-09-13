@@ -1,9 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FolderOpen, Users, Settings, ArrowRight, Calendar as CalendarIcon, Check, Clock, AlertTriangle } from "lucide-react";
+import { FolderOpen, Users, Settings, ArrowRight, Calendar as CalendarIcon, Check, Clock, AlertTriangle, Loader2 } from "lucide-react";
 import GlassCard from "../components/GlassCard";
 import Calendar from "../components/Calendar";
-import { useGetRowsQuery } from "../store/sheetApi";
+import { useGetRowsQuery, useUpdateRowMutation } from "../store/sheetApi";
 import { isConfigured } from "../services/sheetApi";
 import { getTodoType, getTypeIcon, isOverdue, isDueToday, isDueSoon, todoTypeBadgeClass, formatDateVN } from "../utils/todo";
 
@@ -31,23 +31,23 @@ const shortcuts = [
   },
 ];
 
-function TodoLoadingScreen() {
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-bg-base">
-      {/* Spinner */}
-      <div className="relative flex items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-border border-t-emerald-400" />
-        <span className="absolute text-2xl">📋</span>
-      </div>
-      <div className="flex flex-col items-center gap-1 text-center">
-        <p className="text-base font-semibold text-text-base">Đang tải việc cần làm…</p>
-        <p className="text-sm text-text-muted">Chờ xíu để không bỏ sót việc quan trọng</p>
-      </div>
-    </div>
-  );
-}
 
-function RecentTasks({ rows, customTypeRows }) {
+function RecentTasks({ rows, customTypeRows, isLoading }) {
+  const [updateRow] = useUpdateRowMutation();
+  const [togglingId, setTogglingId] = useState(null);
+
+  const toggleDone = async (e, row) => {
+    e.preventDefault();
+    setTogglingId(row.id);
+    try {
+      await updateRow({ table: "congviec", id: row.id, data: { hoanThanh: !row.hoanThanh } }).unwrap();
+    } catch (err) {
+      window.alert("Lỗi khi cập nhật trạng thái");
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const recentTasks = useMemo(() => {
     if (!rows) return [];
     const todayDate = new Date();
@@ -88,16 +88,35 @@ function RecentTasks({ rows, customTypeRows }) {
     return sorted.slice(0, 10);
   }, [rows]);
 
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-xl font-semibold text-text-base">
+            <Clock className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            Việc cần chú ý
+          </h2>
+        </div>
+        <div className="flex items-center justify-center rounded-3xl border border-border bg-surface p-8">
+          <div className="flex items-center gap-3 text-text-muted">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-sm font-medium">Đang tải việc cần làm...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (recentTasks.length === 0) return null;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-text-base flex items-center gap-2">
-          <Clock className="h-5 w-5 text-primary-400" />
+          <Clock className="h-5 w-5 text-primary-600 dark:text-primary-400" />
           Việc cần chú ý
         </h2>
-        <Link to="/cong-viec" className="text-sm font-medium text-primary-400 hover:text-primary-300 flex items-center gap-1 transition-colors">
+        <Link to="/cong-viec" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1 transition-colors">
           Xem tất cả
           <ArrowRight className="h-4 w-4" />
         </Link>
@@ -110,6 +129,7 @@ function RecentTasks({ rows, customTypeRows }) {
           const overdue = isOverdue(row);
           const dueToday = !row.hoanThanh && isDueToday(row);
           const dueSoon = isDueSoon(row);
+          const isToggling = togglingId === row.id;
 
           return (
             <Link
@@ -125,15 +145,17 @@ function RecentTasks({ rows, customTypeRows }) {
                       : "bg-surface border-border hover:bg-surface-hover"
               }`}
             >
-              <div
-                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border ${
+              <button
+                onClick={(e) => toggleDone(e, row)}
+                disabled={isToggling}
+                className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
                   row.hoanThanh
                     ? "border-primary-400 bg-primary-400/90 text-bg-base"
-                    : "border-border text-transparent"
-                }`}
+                    : `border-border hover:border-primary-400/60 ${isToggling ? "text-primary-400" : "text-transparent"}`
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {row.hoanThanh && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-              </div>
+                {isToggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+              </button>
 
               <div className="flex flex-1 flex-col gap-1.5 text-left">
                 <div className="flex flex-wrap items-center gap-2">
@@ -174,10 +196,7 @@ function Home() {
   const { data: rows, isLoading: loadingTodos }       = useGetRowsQuery("congviec",    { skip: !configured });
   const { data: customTypeRows, isLoading: loadingTypes } = useGetRowsQuery("loaicongviec", { skip: !configured });
 
-  // Block the whole page until todos are ready
-  if (configured && (loadingTodos || loadingTypes)) {
-    return <TodoLoadingScreen />;
-  }
+  const isLoading = configured && (loadingTodos || loadingTypes);
 
   return (
     <>
@@ -196,7 +215,7 @@ function Home() {
       <main className="mt-12 flex flex-col gap-8">
         <Calendar />
 
-        {configured && <RecentTasks rows={rows} customTypeRows={customTypeRows} />}
+        {configured && <RecentTasks rows={rows} customTypeRows={customTypeRows} isLoading={isLoading} />}
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {shortcuts.map(({ to, title, description, icon: Icon, accent }) => (

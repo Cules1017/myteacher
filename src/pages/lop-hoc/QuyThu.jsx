@@ -158,7 +158,7 @@ function StudentPaymentRow({ student, payment, column, onSave, onDelete }) {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="p-1.5 rounded-lg text-primary-400 hover:bg-primary-400/10 disabled:opacity-50 transition-colors"
+              className="p-1.5 rounded-lg text-primary-600 dark:text-primary-400 hover:bg-primary-400/10 disabled:opacity-50 transition-colors"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             </button>
@@ -173,7 +173,7 @@ function StudentPaymentRow({ student, payment, column, onSave, onDelete }) {
         ) : payment ? (
           <>
             <div className="flex flex-col items-end">
-              <span className="text-primary-400 font-semibold text-sm">
+              <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm">
                 Đã đóng {formatVND(payment.soTien)}đ
               </span>
               <div className="flex items-center gap-2">
@@ -195,7 +195,7 @@ function StudentPaymentRow({ student, payment, column, onSave, onDelete }) {
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="p-2 rounded-lg text-text-muted hover:text-rose-400 hover:bg-rose-400/10 transition-colors"
+                className="p-2 rounded-lg text-text-muted hover:text-rose-600 dark:text-rose-400 hover:bg-rose-400/10 transition-colors"
               >
                 {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
               </button>
@@ -207,7 +207,7 @@ function StudentPaymentRow({ student, payment, column, onSave, onDelete }) {
             <button
               onClick={handleDongDu}
               disabled={saving}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-400 text-sm font-medium hover:bg-primary-500/20 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400 text-sm font-medium hover:bg-primary-500/20 transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               Đóng đủ
@@ -472,7 +472,7 @@ function QuyThu() {
                           {c.hanDong && (
                             <p>Hạn: <span className="text-amber-200">{new Date(c.hanDong).toLocaleDateString('vi-VN')}</span></p>
                           )}
-                          <p>Tiến độ: <span className="text-primary-400">{formatVND(actual)}đ</span> / {formatVND(expected)}đ ({percent}%)</p>
+                          <p>Tiến độ: <span className="text-primary-600 dark:text-primary-400">{formatVND(actual)}đ</span> / {formatVND(expected)}đ ({percent}%)</p>
                         </div>
                         <div className="w-full bg-surface-hover rounded-full h-1.5 mt-1">
                           <div className="bg-primary-400 h-1.5 rounded-full" style={{ width: `${percent}%` }}></div>
@@ -499,7 +499,7 @@ function QuyThu() {
                 <div>
                   <h2 className="text-xl font-bold text-primary-100">{activeColumn.tenKhoanThu}</h2>
                   <div className="flex items-center gap-3 mt-1">
-                    <p className="text-primary-400/80 text-sm">Mức thu chuẩn: {formatVND(activeColumn.mucThu)}đ / học sinh</p>
+                    <p className="text-primary-600 dark:text-primary-400/80 text-sm">Mức thu chuẩn: {formatVND(activeColumn.mucThu)}đ / học sinh</p>
                     {activeColumn.hanDong && (
                       <>
                         <span className="w-1 h-1 rounded-full bg-slate-600"></span>
@@ -512,7 +512,7 @@ function QuyThu() {
                   <button
                     onClick={handleMarkAllDongDu}
                     disabled={markingAll}
-                    className="flex items-center gap-2 rounded-full border border-primary-500/30 bg-primary-500/10 px-4 py-2 text-sm font-medium text-primary-300 transition-colors hover:bg-primary-500/20 disabled:opacity-50"
+                    className="flex items-center gap-2 rounded-full border border-primary-500/30 bg-primary-100 dark:bg-primary-500/10 px-4 py-2 text-sm font-medium text-primary-300 transition-colors hover:bg-primary-500/20 disabled:opacity-50"
                   >
                     {markingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCheck className="h-4 w-4" />}
                     Đóng tất cả
@@ -520,7 +520,7 @@ function QuyThu() {
                   <button
                     onClick={() => handleDeleteColumn(activeColumn)}
                     disabled={deletingColumnId === activeColumn.id}
-                    className="flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-300 transition-colors hover:bg-rose-500/20 disabled:opacity-50"
+                    className="flex items-center gap-2 rounded-full border border-rose-500/30 bg-rose-100 dark:bg-rose-500/10 px-4 py-2 text-sm font-medium text-rose-300 transition-colors hover:bg-rose-500/20 disabled:opacity-50"
                   >
                     {deletingColumnId === activeColumn.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     Xoá đợt thu này

@@ -351,7 +351,7 @@ function ThoiKhoaBieu() {
                                       )}
                                     </>
                                   ) : (
-                                    <span className="text-xs text-slate-600">+ Thêm</span>
+                                    <span className="text-xs text-text-muted">+ Thêm</span>
                                   )}
                                 </button>
                               </td>

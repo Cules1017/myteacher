@@ -392,7 +392,7 @@ function HocSinh() {
                                 row[col.key] ? (
                                   <span className="text-primary-300">✓</span>
                                 ) : (
-                                  <span className="text-slate-600">–</span>
+                                  <span className="text-text-muted">–</span>
                                 )
                               ) : (
                                 row[col.key] || "—"
