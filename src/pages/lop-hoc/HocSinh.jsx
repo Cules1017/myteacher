@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3 } from "lucide-react";
+import LoadingState from "../../components/LoadingState";
 import { isConfigured } from "../../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
 import LopHocTabs from "../../components/lop-hoc/LopHocTabs";
@@ -242,10 +243,10 @@ function HocSinh() {
   return (
     <>
       <header className="flex flex-col items-center gap-3 text-center">
-        <span className="rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-medium uppercase tracking-widest text-slate-300">
+        <span className="rounded-full border border-border bg-transparent px-4 py-1 text-xs font-medium uppercase tracking-widest text-text-base">
           Lớp học
         </span>
-        <h1 className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
+        <h1 className="bg-gradient-to-r from-text-base to-primary-500 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
           Quản lý học sinh
         </h1>
       </header>
@@ -259,28 +260,28 @@ function HocSinh() {
       ) : (
         <main className="mt-10 flex flex-col gap-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex w-full items-center gap-1 rounded-full border border-white/10 bg-white/5 pl-2 pr-1 sm:max-w-md">
+            <div className="flex w-full items-center gap-1 rounded-full border border-border bg-surface pl-2 pr-1 sm:max-w-md">
               <select
                 value={searchField}
                 onChange={(e) => setSearchField(e.target.value)}
                 aria-label="Tìm theo tiêu chí"
-                className="shrink-0 rounded-full bg-transparent py-2 pl-2 pr-1 text-xs font-medium text-slate-300 outline-none"
+                className="shrink-0 rounded-full bg-transparent py-2 pl-2 pr-1 text-xs font-medium text-text-base outline-none"
               >
                 {SEARCH_FIELDS.map((f) => (
-                  <option key={f.key} value={f.key} className="bg-slate-900 text-slate-200">
+                  <option key={f.key} value={f.key} className="bg-bg-base text-text-base">
                     {f.label}
                   </option>
                 ))}
               </select>
-              <span className="h-4 w-px shrink-0 bg-white/10" />
+              <span className="h-4 w-px shrink-0 bg-surface-hover" />
               <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={`Tìm theo ${SEARCH_FIELDS.find((f) => f.key === searchField)?.label.toLowerCase()}...`}
-                  className="w-full bg-transparent py-2 pl-8 pr-3 text-sm text-white outline-none placeholder:text-slate-500"
+                  className="w-full bg-transparent py-2 pl-8 pr-3 text-sm text-text-base outline-none placeholder:text-text-muted"
                 />
               </div>
             </div>
@@ -288,27 +289,27 @@ function HocSinh() {
               <div className="relative" data-column-menu>
                 <button
                   onClick={() => setColumnMenuOpen((v) => !v)}
-                  className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10"
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover"
                 >
                   <Columns3 className="h-3.5 w-3.5" />
                   Cột hiển thị
                 </button>
                 {columnMenuOpen && (
-                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-xl">
-                    <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-2xl border border-border bg-bg-base/95 p-3 shadow-2xl backdrop-blur-xl">
+                    <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
                       Chọn cột hiển thị
                     </p>
                     <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
                       {TOGGLEABLE_COLUMNS.map((col) => (
                         <label
                           key={col.key}
-                          className="flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm text-slate-300 hover:bg-white/5"
+                          className="flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm text-text-base hover:bg-surface"
                         >
                           <input
                             type="checkbox"
                             checked={visibleColumns.includes(col.key)}
                             onChange={() => toggleColumn(col.key)}
-                            className="h-4 w-4 rounded border-white/20 bg-white/5 accent-emerald-400"
+                            className="h-4 w-4 rounded border-border bg-surface accent-emerald-400"
                           />
                           {col.label}
                         </label>
@@ -320,7 +321,7 @@ function HocSinh() {
               {hiddenIds.length > 0 && (
                 <button
                   onClick={() => setShowHidden((v) => !v)}
-                  className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10"
+                  className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover"
                 >
                   {showHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   {showHidden ? "Ẩn danh sách đã ẩn" : `Hiện ${hiddenIds.length} học sinh đã ẩn`}
@@ -328,7 +329,7 @@ function HocSinh() {
               )}
               <button
                 onClick={openAddForm}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 transition-transform hover:-translate-y-0.5"
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-400 to-blue-500 px-4 py-2 text-sm font-semibold text-bg-base transition-transform hover:-translate-y-0.5"
               >
                 <Plus className="h-4 w-4" strokeWidth={2.5} />
                 Thêm học sinh
@@ -346,23 +347,20 @@ function HocSinh() {
           )}
 
           {isLoading ? (
-            <div className="flex items-center justify-center gap-2 py-16 text-slate-400">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Đang tải danh sách học sinh...
-            </div>
+            <LoadingState emoji="📚" />
           ) : rows && rows.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-16 text-center text-slate-400">
+            <div className="rounded-3xl border border-border bg-transparent px-6 py-16 text-center text-text-muted">
               Chưa có học sinh nào. Bấm "Thêm học sinh" để bắt đầu.
             </div>
           ) : rows && filteredRows.length === 0 ? (
-            <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-16 text-center text-slate-400">
+            <div className="rounded-3xl border border-border bg-transparent px-6 py-16 text-center text-text-muted">
               Không tìm thấy học sinh phù hợp.
             </div>
           ) : rows && filteredRows.length > 0 ? (
-            <div className="overflow-x-auto rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+            <div className="overflow-x-auto rounded-3xl border border-border bg-surface backdrop-blur-xl">
               <table className="w-full min-w-[960px] text-left text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-slate-400">
+                  <tr className="border-b border-border text-xs uppercase tracking-wide text-text-muted">
                     {displayColumns.map((col) => (
                       <th key={col.key} className="whitespace-nowrap px-4 py-3 font-medium">
                         {col.label}
@@ -384,15 +382,15 @@ function HocSinh() {
                           onPointerLeave={() => clearPressTimer(rowKey)}
                           onPointerCancel={() => clearPressTimer(rowKey)}
                           onClick={() => handleRowClick(rowKey)}
-                          className={`cursor-pointer select-none border-b border-white/5 last:border-0 hover:bg-white/5 ${
+                          className={`cursor-pointer select-none border-b border-border last:border-0 hover:bg-surface ${
                             isHidden ? "opacity-40" : ""
-                          } ${isSelected ? "bg-white/10" : ""}`}
+                          } ${isSelected ? "bg-surface-hover" : ""}`}
                         >
                           {displayColumns.map((col) => (
-                            <td key={col.key} className="whitespace-nowrap px-4 py-3 text-slate-200">
+                            <td key={col.key} className="whitespace-nowrap px-4 py-3 text-text-base">
                               {col.key === "hsNoiTru" || col.key === "hsBanTru" ? (
                                 row[col.key] ? (
-                                  <span className="text-emerald-300">✓</span>
+                                  <span className="text-primary-300">✓</span>
                                 ) : (
                                   <span className="text-slate-600">–</span>
                                 )
@@ -403,19 +401,19 @@ function HocSinh() {
                           ))}
                         </tr>
                         {isSelected && (
-                          <tr data-hocsinh-row className="border-b border-white/5 bg-white/5 last:border-0">
+                          <tr data-hocsinh-row className="border-b border-border bg-surface last:border-0">
                             <td colSpan={displayColumns.length} className="px-4 py-2">
                               <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-2">
                                 <button
                                   onClick={() => openEditForm(row)}
-                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-white/10 sm:rounded-full"
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-text-base transition-colors hover:bg-surface-hover sm:rounded-full"
                                 >
                                   <Pencil className="h-4 w-4" strokeWidth={2} />
                                   Sửa
                                 </button>
                                 <button
                                   onClick={() => toggleHidden(rowKey)}
-                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-white/10 sm:rounded-full"
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-text-base transition-colors hover:bg-surface-hover sm:rounded-full"
                                 >
                                   {isHidden ? (
                                     <Eye className="h-4 w-4" strokeWidth={2} />
@@ -468,9 +466,9 @@ function HocSinh() {
 
 function NotConfiguredNotice() {
   return (
-    <div className="mt-10 rounded-3xl border border-amber-400/25 bg-amber-400/5 px-6 py-8 text-center text-slate-300">
+    <div className="mt-10 rounded-3xl border border-amber-400/25 bg-amber-400/5 px-6 py-8 text-center text-text-base">
       <p className="font-semibold text-amber-200">Chưa kết nối được với Google Sheet.</p>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-slate-400">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-text-muted">
         Cần cấu hình <code className="rounded bg-black/30 px-1.5 py-0.5">VITE_APPS_SCRIPT_URL</code> và{" "}
         <code className="rounded bg-black/30 px-1.5 py-0.5">VITE_APPS_SCRIPT_TOKEN</code> trong file{" "}
         <code className="rounded bg-black/30 px-1.5 py-0.5">.env</code>. Xem hướng dẫn đầy đủ trong{" "}
@@ -485,15 +483,15 @@ function StudentFormModal({ fields, formData, setFormData, onSubmit, onClose, sa
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/10 bg-slate-900/95 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-border bg-bg-base/95 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-text-base">
             {isEditing ? "Sửa thông tin học sinh" : "Thêm học sinh"}
           </h2>
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-hover hover:text-text-base"
           >
             <X className="h-4 w-4" />
           </button>
@@ -504,19 +502,19 @@ function StudentFormModal({ fields, formData, setFormData, onSubmit, onClose, sa
             {fields
               .filter((f) => f.type !== "checkbox")
               .map((field) => (
-                <label key={field.key} className="flex flex-col gap-1.5 text-sm text-slate-300">
+                <label key={field.key} className="flex flex-col gap-1.5 text-sm text-text-base">
                   {field.label}
                   {field.type === "select" ? (
                     <select
                       value={formData[field.key]}
                       onChange={(e) => setField(field.key, e.target.value)}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-emerald-400/50"
+                      className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none focus:border-primary-400/50"
                     >
-                      <option value="" className="bg-slate-900">
+                      <option value="" className="bg-bg-base">
                         Chọn...
                       </option>
                       {field.options.map((opt) => (
-                        <option key={opt} value={opt} className="bg-slate-900">
+                        <option key={opt} value={opt} className="bg-bg-base">
                           {opt}
                         </option>
                       ))}
@@ -526,7 +524,7 @@ function StudentFormModal({ fields, formData, setFormData, onSubmit, onClose, sa
                       type={field.type}
                       value={formData[field.key]}
                       onChange={(e) => setField(field.key, e.target.value)}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-emerald-400/50"
+                      className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none focus:border-primary-400/50"
                     />
                   )}
                 </label>
@@ -537,12 +535,12 @@ function StudentFormModal({ fields, formData, setFormData, onSubmit, onClose, sa
             {fields
               .filter((f) => f.type === "checkbox")
               .map((field) => (
-                <label key={field.key} className="flex items-center gap-2 text-sm text-slate-300">
+                <label key={field.key} className="flex items-center gap-2 text-sm text-text-base">
                   <input
                     type="checkbox"
                     checked={Boolean(formData[field.key])}
                     onChange={(e) => setField(field.key, e.target.checked)}
-                    className="h-4 w-4 rounded border-white/20 bg-white/5 accent-emerald-400"
+                    className="h-4 w-4 rounded border-border bg-surface accent-emerald-400"
                   />
                   {field.label}
                 </label>
@@ -555,14 +553,14 @@ function StudentFormModal({ fields, formData, setFormData, onSubmit, onClose, sa
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+              className="rounded-full border border-border px-4 py-2 text-sm font-medium text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
             >
               Huỷ
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
+              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-400 to-blue-500 px-4 py-2 text-sm font-semibold text-bg-base disabled:opacity-60"
             >
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
               Lưu

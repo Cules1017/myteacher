@@ -42,6 +42,11 @@ function rowToObject_(schema, headers, rowValues, sttPosition) {
       value = col.type === 'date'
         ? Utilities.formatDate(value, Session.getScriptTimeZone(), 'yyyy-MM-dd')
         : value.toISOString();
+    } else if (col.type === 'time' && value instanceof Date) {
+      // Sheets auto-detects an "HH:mm" string written to a cell and silently
+      // converts it to a time-of-day Date serial — reformat it back on read
+      // so the API keeps returning a plain "HH:mm" string either way.
+      value = Utilities.formatDate(value, Session.getScriptTimeZone(), 'HH:mm');
     }
     obj[col.key] = value;
   });

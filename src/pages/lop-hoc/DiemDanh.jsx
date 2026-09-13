@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import ExcelJS from "exceljs";
 import { Search, Loader2, Pencil, Trash2, X, FileSpreadsheet, Check } from "lucide-react";
+import LoadingState from "../../components/LoadingState";
+import ConfirmModal from "../../components/ConfirmModal";
 import { isConfigured, exportSheet } from "../../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
 import { normalizeText } from "../../utils/text";
@@ -49,6 +51,7 @@ function DiemDanh() {
   const configured = isConfigured();
 
   const [date, setDate] = useState(todayStr());
+  const [confirmConfig, setConfirmConfig] = useState(null);
 
   const {
     data: students,
@@ -140,25 +143,37 @@ function DiemDanh() {
     }
   };
 
-  const handleDelete = async (record) => {
-    if (!window.confirm(`Xoá ghi nhận vắng của "${record.hoVaTen}"?`)) return;
-    setDeletingId(record.id);
-    try {
-      await deleteRowMutation({ table: TABLE, id: record.id }).unwrap();
-    } catch (err) {
-      window.alert(err.message);
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDelete = (record) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: "Xác nhận xoá",
+      message: `Xoá ghi nhận vắng của "${record.hoVaTen}"?`,
+      isDangerous: true,
+      onConfirm: async () => {
+        setConfirmConfig((prev) => ({ ...prev, isLoading: true }));
+        setDeletingId(record.id);
+        try {
+          await deleteRowMutation({ table: TABLE, id: record.id }).unwrap();
+          setConfirmConfig(null);
+        } catch (err) {
+          window.alert(err.message);
+          setConfirmConfig((prev) => ({ ...prev, isLoading: false }));
+        } finally {
+          setDeletingId(null);
+        }
+      },
+      onCancel: () => setConfirmConfig(null),
+    });
   };
 
   return (
     <>
+      <ConfirmModal {...confirmConfig} />
       <header className="flex flex-col items-center gap-3 text-center">
-        <span className="rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-medium uppercase tracking-widest text-slate-300">
+        <span className="rounded-full border border-border bg-transparent px-4 py-1 text-xs font-medium uppercase tracking-widest text-text-base">
           Lớp học
         </span>
-        <h1 className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
+        <h1 className="bg-gradient-to-r from-text-base to-primary-500 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
           Điểm danh
         </h1>
       </header>
@@ -172,26 +187,26 @@ function DiemDanh() {
       ) : (
         <main className="mt-10 flex flex-col gap-6">
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <label className="flex items-center gap-2 text-sm text-slate-300">
+            <label className="flex items-center gap-2 text-sm text-text-base">
               Ngày điểm danh
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-emerald-400/50"
+                className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none focus:border-primary-400/50"
               />
             </label>
             {date !== todayStr() && (
               <button
                 onClick={() => setDate(todayStr())}
-                className="text-sm font-medium text-emerald-300 transition-colors hover:text-emerald-200"
+                className="text-sm font-medium text-primary-300 transition-colors hover:text-primary-200"
               >
                 Hôm nay
               </button>
             )}
             <button
               onClick={() => setLookupOpen(true)}
-              className="flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10"
+              className="flex items-center gap-2 rounded-full border border-border px-4 py-2 text-sm font-medium text-text-base transition-colors hover:bg-surface-hover"
             >
               <FileSpreadsheet className="h-4 w-4" />
               Tra cứu & Xuất Excel
@@ -208,19 +223,19 @@ function DiemDanh() {
           )}
 
           <div className="relative mx-auto w-full max-w-md">
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5">
-              <Search className="h-4 w-4 shrink-0 text-slate-500" />
+            <div className="flex items-center gap-2 rounded-full border border-border bg-transparent px-4 py-2.5">
+              <Search className="h-4 w-4 shrink-0 text-text-muted" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Tìm học sinh để ghi nhận vắng..."
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                className="w-full bg-transparent text-sm text-text-base outline-none placeholder:text-text-muted"
               />
             </div>
             {query.trim() && (
-              <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/95 shadow-2xl backdrop-blur-xl">
+              <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-2xl border border-border bg-bg-base/95 shadow-2xl backdrop-blur-xl">
                 {searchResults.length === 0 ? (
-                  <p className="px-4 py-3 text-sm text-slate-500">Không tìm thấy học sinh.</p>
+                  <p className="px-4 py-3 text-sm text-text-muted">Không tìm thấy học sinh.</p>
                 ) : (
                   searchResults.map((s) => {
                     const marked = attendanceByStudentId.has(s.id);
@@ -229,7 +244,7 @@ function DiemDanh() {
                         key={s.id}
                         type="button"
                         onClick={() => selectStudent(s)}
-                        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-slate-200 transition-colors hover:bg-white/10"
+                        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-text-base transition-colors hover:bg-surface-hover"
                       >
                         <span>{s.hoVaTen}</span>
                         {marked && <span className="text-xs text-amber-300">Đã ghi nhận</span>}
@@ -242,13 +257,13 @@ function DiemDanh() {
           </div>
 
           {selected && (
-            <div className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-5">
+            <div className="mx-auto w-full max-w-md rounded-3xl border border-border bg-surface p-5">
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-white">{selected.hoVaTen}</h2>
+                <h2 className="font-semibold text-text-base">{selected.hoVaTen}</h2>
                 <button
                   onClick={closeMarkForm}
                   aria-label="Đóng"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-hover hover:text-text-base"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -262,8 +277,8 @@ function DiemDanh() {
                       onClick={() => setLoaiVang(opt)}
                       className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                         loaiVang === opt
-                          ? "bg-white/90 text-slate-900"
-                          : "border border-white/10 text-slate-300 hover:bg-white/10"
+                          ? "bg-primary-500 text-white shadow-md"
+                          : "border border-border text-text-base hover:bg-surface-hover"
                       }`}
                     >
                       {opt}
@@ -274,13 +289,13 @@ function DiemDanh() {
                   value={ghiChu}
                   onChange={(e) => setGhiChu(e.target.value)}
                   placeholder="Ghi chú (không bắt buộc)"
-                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none focus:border-emerald-400/50"
+                  className="rounded-xl border border-border bg-transparent px-3 py-2 text-sm text-text-base outline-none focus:border-primary-400/50"
                 />
                 {formError && <p className="text-sm text-rose-300">{formError}</p>}
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 disabled:opacity-60"
+                  className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-400 to-blue-500 px-4 py-2 text-sm font-semibold text-bg-base disabled:opacity-60"
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   {editingRecord ? "Cập nhật" : "Lưu"}
@@ -290,24 +305,21 @@ function DiemDanh() {
           )}
 
           <div>
-            <h2 className="mb-3 text-center text-sm font-medium text-slate-400">
+            <h2 className="mb-3 text-center text-sm font-medium text-text-muted">
               Danh sách vắng ngày {formatDateVN(date)} ({attendanceForDate.length})
             </h2>
 
             {attendanceLoading && !error ? (
-              <div className="flex items-center justify-center gap-2 py-10 text-slate-400">
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Đang tải điểm danh...
-              </div>
+              <LoadingState emoji="📝" />
             ) : attendanceForDate.length === 0 ? (
-              <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-12 text-center text-slate-400">
+              <div className="rounded-3xl border border-border bg-transparent px-6 py-12 text-center text-text-muted">
                 Chưa ghi nhận học sinh vắng trong ngày này.
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
+              <div className="overflow-x-auto rounded-3xl border border-border bg-surface backdrop-blur-xl">
                 <table className="w-full min-w-[560px] text-left text-sm">
                   <thead>
-                    <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-slate-400">
+                    <tr className="border-b border-border text-xs uppercase tracking-wide text-text-muted">
                       <th className="whitespace-nowrap px-4 py-3 font-medium">Họ và tên học sinh</th>
                       <th className="whitespace-nowrap px-4 py-3 font-medium">Loại vắng</th>
                       <th className="whitespace-nowrap px-4 py-3 font-medium">Ghi chú</th>
@@ -316,26 +328,26 @@ function DiemDanh() {
                   </thead>
                   <tbody>
                     {attendanceForDate.map((record) => (
-                      <tr key={record.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
-                        <td className="whitespace-nowrap px-4 py-3 text-slate-200">{record.hoVaTen}</td>
+                      <tr key={record.id} className="border-b border-border last:border-0 hover:bg-surface">
+                        <td className="whitespace-nowrap px-4 py-3 text-text-base">{record.hoVaTen}</td>
                         <td className="whitespace-nowrap px-4 py-3">
                           <span
                             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                               record.loaiVang === "Có phép"
-                                ? "bg-emerald-400/10 text-emerald-300"
+                                ? "bg-primary-400/10 text-primary-300"
                                 : "bg-rose-400/10 text-rose-300"
                             }`}
                           >
                             {record.loaiVang}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-300">{record.ghiChu || "—"}</td>
+                        <td className="px-4 py-3 text-text-base">{record.ghiChu || "—"}</td>
                         <td className="whitespace-nowrap px-4 py-3">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => selectStudent({ id: record.hocSinhId, hoVaTen: record.hoVaTen })}
                               aria-label="Sửa"
-                              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                              className="flex h-8 w-8 items-center justify-center rounded-full text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
                             >
                               <Pencil className="h-4 w-4" strokeWidth={2} />
                             </button>
@@ -343,7 +355,7 @@ function DiemDanh() {
                               onClick={() => handleDelete(record)}
                               disabled={deletingId === record.id}
                               aria-label="Xoá"
-                              className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-rose-400/20 hover:text-rose-300 disabled:opacity-50"
+                              className="flex h-8 w-8 items-center justify-center rounded-full text-text-base transition-colors hover:bg-rose-400/20 hover:text-rose-300 disabled:opacity-50"
                             >
                               {deletingId === record.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -377,9 +389,9 @@ function DiemDanh() {
 
 function NotConfiguredNotice() {
   return (
-    <div className="mt-10 rounded-3xl border border-amber-400/25 bg-amber-400/5 px-6 py-8 text-center text-slate-300">
+    <div className="mt-10 rounded-3xl border border-amber-400/25 bg-amber-400/5 px-6 py-8 text-center text-text-base">
       <p className="font-semibold text-amber-200">Chưa kết nối được với Google Sheet.</p>
-      <p className="mx-auto mt-2 max-w-lg text-sm text-slate-400">
+      <p className="mx-auto mt-2 max-w-lg text-sm text-text-muted">
         Cần cấu hình <code className="rounded bg-black/30 px-1.5 py-0.5">VITE_APPS_SCRIPT_URL</code> và{" "}
         <code className="rounded bg-black/30 px-1.5 py-0.5">VITE_APPS_SCRIPT_TOKEN</code> trong file{" "}
         <code className="rounded bg-black/30 px-1.5 py-0.5">.env</code>.
@@ -598,13 +610,13 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-slate-900/95 shadow-2xl backdrop-blur-2xl">
-        <div className="flex items-center justify-between border-b border-white/10 px-6 py-5 sm:px-8">
-          <h2 className="text-lg font-semibold text-white">Tra cứu & xuất Excel điểm danh</h2>
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-border bg-bg-base/95 shadow-2xl backdrop-blur-2xl">
+        <div className="flex items-center justify-between border-b border-border px-6 py-5 sm:px-8">
+          <h2 className="text-lg font-semibold text-text-base">Tra cứu & xuất Excel điểm danh</h2>
           <button
             onClick={onClose}
             aria-label="Đóng"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-hover hover:text-text-base"
           >
             <X className="h-4 w-4" />
           </button>
@@ -613,15 +625,15 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
         <div className="flex-1 overflow-y-auto px-6 py-5 sm:px-8">
           <div className="flex flex-col gap-5">
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Phạm vi</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Phạm vi</p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setScope("all")}
                   className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     scope === "all"
-                      ? "bg-white/90 text-slate-900"
-                      : "border border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "border border-border text-text-base hover:bg-surface-hover"
                   }`}
                 >
                   Toàn bộ lớp
@@ -631,8 +643,8 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                   onClick={() => setScope("selected")}
                   className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     scope === "selected"
-                      ? "bg-white/90 text-slate-900"
-                      : "border border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "border border-border text-text-base hover:bg-surface-hover"
                   }`}
                 >
                   Chọn học sinh {selectedIds.size > 0 && `(${selectedIds.size})`}
@@ -641,15 +653,15 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Kiểu xuất</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Kiểu xuất</p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setExportMode("list")}
                   className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     exportMode === "list"
-                      ? "bg-white/90 text-slate-900"
-                      : "border border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "border border-border text-text-base hover:bg-surface-hover"
                   }`}
                 >
                   Danh sách
@@ -659,8 +671,8 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                   onClick={() => setExportMode("calendar")}
                   className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     exportMode === "calendar"
-                      ? "bg-white/90 text-slate-900"
-                      : "border border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "border border-border text-text-base hover:bg-surface-hover"
                   }`}
                 >
                   Bảng theo ngày (lịch)
@@ -669,15 +681,15 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
             </div>
 
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Đích xuất</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Đích xuất</p>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setDestination("download")}
                   className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     destination === "download"
-                      ? "bg-white/90 text-slate-900"
-                      : "border border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "border border-border text-text-base hover:bg-surface-hover"
                   }`}
                 >
                   Tải file Excel
@@ -687,8 +699,8 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                   onClick={() => setDestination("sheet")}
                   className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
                     destination === "sheet"
-                      ? "bg-white/90 text-slate-900"
-                      : "border border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-primary-500 text-white shadow-md"
+                      : "border border-border text-text-base hover:bg-surface-hover"
                   }`}
                 >
                   Google Sheets
@@ -697,21 +709,21 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
             </div>
 
             {scope === "selected" && (
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2">
-                  <Search className="h-4 w-4 shrink-0 text-slate-500" />
+              <div className="rounded-2xl border border-border bg-surface p-3">
+                <div className="flex items-center gap-2 rounded-full border border-border bg-transparent px-3 py-2">
+                  <Search className="h-4 w-4 shrink-0 text-text-muted" />
                   <input
                     value={pickerQuery}
                     onChange={(e) => setPickerQuery(e.target.value)}
                     placeholder="Tìm học sinh..."
-                    className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
+                    className="w-full bg-transparent text-sm text-text-base outline-none placeholder:text-text-muted"
                   />
                 </div>
                 <div className="mt-2 flex items-center justify-between px-1 text-xs">
                   <button
                     type="button"
                     onClick={selectAllVisible}
-                    className="font-medium text-emerald-300 hover:text-emerald-200"
+                    className="font-medium text-primary-300 hover:text-primary-200"
                   >
                     Chọn tất cả
                   </button>
@@ -719,7 +731,7 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                     <button
                       type="button"
                       onClick={clearSelected}
-                      className="font-medium text-slate-400 hover:text-slate-200"
+                      className="font-medium text-text-muted hover:text-text-base"
                     >
                       Bỏ chọn tất cả
                     </button>
@@ -727,7 +739,7 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                 </div>
                 <div className="mt-2 max-h-48 overflow-y-auto">
                   {pickerResults.length === 0 ? (
-                    <p className="px-2 py-3 text-sm text-slate-500">Không tìm thấy học sinh.</p>
+                    <p className="px-2 py-3 text-sm text-text-muted">Không tìm thấy học sinh.</p>
                   ) : (
                     pickerResults.map((s) => {
                       const checked = selectedIds.has(s.id);
@@ -736,18 +748,18 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                           type="button"
                           key={s.id}
                           onClick={() => toggleStudent(s.id)}
-                          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm text-slate-200 hover:bg-white/10"
+                          className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left text-sm text-text-base hover:bg-surface-hover"
                         >
                           <span
                             className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
-                              checked ? "border-emerald-400 bg-emerald-400/90 text-slate-900" : "border-white/20"
+                              checked ? "border-primary-400 bg-primary-400/90 text-bg-base" : "border-border"
                             }`}
                           >
                             {checked && <Check className="h-3 w-3" strokeWidth={3} />}
                           </span>
                           <span className="flex flex-col">
                             <span>{s.hoVaTen}</span>
-                            <span className="text-xs text-slate-500">Ngày sinh: {birthdayOf(s.id)}</span>
+                            <span className="text-xs text-text-muted">Ngày sinh: {birthdayOf(s.id)}</span>
                           </span>
                         </button>
                       );
@@ -758,26 +770,26 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
             )}
 
             <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
                 Khoảng thời gian {exportMode === "calendar" ? "(bắt buộc)" : "(không bắt buộc)"}
               </p>
               <div className="flex flex-wrap items-center gap-3">
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-text-base">
                   Từ ngày
                   <input
                     type="date"
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-emerald-400/50"
+                    className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none focus:border-primary-400/50"
                   />
                 </label>
-                <label className="flex items-center gap-2 text-sm text-slate-300">
+                <label className="flex items-center gap-2 text-sm text-text-base">
                   Đến ngày
                   <input
                     type="date"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white outline-none focus:border-emerald-400/50"
+                    className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none focus:border-primary-400/50"
                   />
                 </label>
                 {(fromDate || toDate) && (
@@ -787,7 +799,7 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                       setFromDate("");
                       setToDate("");
                     }}
-                    className="text-sm font-medium text-slate-400 hover:text-slate-200"
+                    className="text-sm font-medium text-text-muted hover:text-text-base"
                   >
                     Xoá bộ lọc ngày
                   </button>
@@ -798,10 +810,10 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
             {exportMode === "list" ? (
               <div>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-sm text-slate-300">
-                    Kết quả: <span className="font-semibold text-white">{results.length}</span> buổi vắng
+                  <p className="text-sm text-text-base">
+                    Kết quả: <span className="font-semibold text-text-base">{results.length}</span> buổi vắng
                     {results.length > 0 && (
-                      <span className="text-slate-500">
+                      <span className="text-text-muted">
                         {" "}
                         (Có phép: {coPhepCount} · Không phép: {khongPhepCount})
                       </span>
@@ -810,14 +822,14 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                 </div>
 
                 {results.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-10 text-center text-sm text-slate-400">
+                  <div className="rounded-2xl border border-border bg-transparent px-6 py-10 text-center text-sm text-text-muted">
                     Không có dữ liệu phù hợp với bộ lọc hiện tại.
                   </div>
                 ) : (
-                  <div className="max-h-72 overflow-auto rounded-2xl border border-white/10 bg-white/5">
+                  <div className="max-h-72 overflow-auto rounded-2xl border border-border bg-surface">
                     <table className="w-full min-w-[640px] text-left text-sm">
-                      <thead className="sticky top-0 bg-slate-900/95">
-                        <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-slate-400">
+                      <thead className="sticky top-0 bg-bg-base/95">
+                        <tr className="border-b border-border text-xs uppercase tracking-wide text-text-muted">
                           <th className="whitespace-nowrap px-4 py-3 font-medium">Họ và tên học sinh</th>
                           <th className="whitespace-nowrap px-4 py-3 font-medium">Ngày sinh</th>
                           <th className="whitespace-nowrap px-4 py-3 font-medium">Ngày</th>
@@ -827,22 +839,22 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                       </thead>
                       <tbody>
                         {results.map((r) => (
-                          <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
-                            <td className="whitespace-nowrap px-4 py-3 text-slate-200">{r.hoVaTen}</td>
-                            <td className="whitespace-nowrap px-4 py-3 text-slate-400">{birthdayOf(r.hocSinhId)}</td>
-                            <td className="whitespace-nowrap px-4 py-3 text-slate-300">{formatDateVN(r.ngay)}</td>
+                          <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface">
+                            <td className="whitespace-nowrap px-4 py-3 text-text-base">{r.hoVaTen}</td>
+                            <td className="whitespace-nowrap px-4 py-3 text-text-muted">{birthdayOf(r.hocSinhId)}</td>
+                            <td className="whitespace-nowrap px-4 py-3 text-text-base">{formatDateVN(r.ngay)}</td>
                             <td className="whitespace-nowrap px-4 py-3">
                               <span
                                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                                   r.loaiVang === "Có phép"
-                                    ? "bg-emerald-400/10 text-emerald-300"
+                                    ? "bg-primary-400/10 text-primary-300"
                                     : "bg-rose-400/10 text-rose-300"
                                 }`}
                               >
                                 {r.loaiVang}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-slate-300">{r.ghiChu || "—"}</td>
+                            <td className="px-4 py-3 text-text-base">{r.ghiChu || "—"}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -851,37 +863,37 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
                 )}
               </div>
             ) : (
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+              <div className="rounded-2xl border border-border bg-transparent px-5 py-4">
                 {!fromDate || !toDate ? (
-                  <p className="text-sm text-slate-400">
+                  <p className="text-sm text-text-muted">
                     Chọn khoảng thời gian ở trên để xem số ngày học sẽ được xuất.
                   </p>
                 ) : (
-                  <p className="text-sm text-slate-300">
-                    Sẽ xuất <span className="font-semibold text-white">{schoolDays.length}</span> ngày học
+                  <p className="text-sm text-text-base">
+                    Sẽ xuất <span className="font-semibold text-text-base">{schoolDays.length}</span> ngày học
                     (đã loại trừ Thứ Bảy, Chủ Nhật và các ngày nghỉ lễ đã cấu hình) cho{" "}
-                    <span className="font-semibold text-white">{rowStudents.length}</span> học sinh.
+                    <span className="font-semibold text-text-base">{rowStudents.length}</span> học sinh.
                   </p>
                 )}
-                <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-400">
+                <div className="mt-3 flex flex-wrap gap-4 text-xs text-text-muted">
                   <span className="flex items-center gap-1.5">
                     <span className="h-3.5 w-3.5 rounded bg-rose-300/80" /> x — Vắng không phép
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <span className="h-3.5 w-3.5 rounded bg-emerald-300/80" /> x (ghi chú) — Vắng có phép
+                    <span className="h-3.5 w-3.5 rounded bg-primary-300/80" /> x (ghi chú) — Vắng có phép
                   </span>
                 </div>
               </div>
             )}
 
             {sheetResult && (
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary-400/30 bg-primary-400/10 px-4 py-3 text-sm text-primary-200">
                 <span>Đã tạo Google Sheet thành công.</span>
                 <a
                   href={sheetResult.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="font-semibold underline underline-offset-2 hover:text-emerald-100"
+                  className="font-semibold underline underline-offset-2 hover:text-primary-100"
                 >
                   Mở Google Sheet ↗
                 </a>
@@ -895,11 +907,11 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-white/10 px-6 py-4 sm:px-8">
+        <div className="flex justify-end gap-3 border-t border-border px-6 py-4 sm:px-8">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-full border border-border px-4 py-2 text-sm font-medium text-text-base transition-colors hover:bg-surface-hover hover:text-text-base"
           >
             Đóng
           </button>
@@ -907,7 +919,7 @@ function LookupExportModal({ students, attendance, excludedPeriods, onClose }) {
             type="button"
             onClick={handleExport}
             disabled={exporting}
-            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+            className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary-400 to-blue-500 px-4 py-2 text-sm font-semibold text-bg-base transition-transform hover:-translate-y-0.5 disabled:opacity-60"
           >
             {exporting ? (
               <Loader2 className="h-4 w-4 animate-spin" />

@@ -2,10 +2,10 @@ import NavBar from "./NavBar";
 
 function Layout({ children }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-slate-950 text-white">
+    <div className="relative min-h-screen overflow-hidden bg-bg-base text-text-base">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="animate-blob absolute -left-24 -top-24 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
-        <div className="animate-blob animation-delay-4000 absolute right-0 top-1/3 h-96 w-96 rounded-full bg-emerald-500/20 blur-3xl" />
+        <div className="animate-blob animation-delay-4000 absolute right-0 top-1/3 h-96 w-96 rounded-full bg-primary-500/20 blur-3xl" />
         <div className="absolute bottom-0 left-1/3 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl" />
       </div>
 

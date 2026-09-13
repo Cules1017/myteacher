@@ -88,6 +88,91 @@ var SCHEMAS = {
       { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
     ],
   },
+  thoikhoabieu: {
+    sheetName: 'ThoiKhoaBieu',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'thu', header: 'Thứ', type: 'string' },
+      { key: 'buoi', header: 'Buổi', type: 'string' },
+      { key: 'tiet', header: 'Tiết', type: 'number' },
+      { key: 'monHocId', header: 'Mã môn học', type: 'string' },
+      { key: 'monHoc', header: 'Môn học', type: 'string' },
+      { key: 'ghiChu', header: 'Ghi chú', type: 'string' },
+      { key: 'cuaToi', header: 'Của tôi', type: 'boolean' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  khunggio: {
+    sheetName: 'KhungGio',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'buoi', header: 'Buổi', type: 'string' },
+      { key: 'tiet', header: 'Tiết', type: 'number' },
+      { key: 'gioBatDau', header: 'Giờ bắt đầu', type: 'time' },
+      { key: 'gioKetThuc', header: 'Giờ kết thúc', type: 'time' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  congviec: {
+    sheetName: 'CongViec',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'tieuDe', header: 'Tiêu đề', type: 'string' },
+      { key: 'loai', header: 'Loại công việc', type: 'string' },
+      { key: 'hanNgay', header: 'Hạn ngày', type: 'date' },
+      { key: 'hanGio', header: 'Hạn giờ', type: 'string' },
+      { key: 'moTa', header: 'Mô tả', type: 'string' },
+      { key: 'hoanThanh', header: 'Hoàn thành', type: 'boolean' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  loaicongviec: {
+    sheetName: 'LoaiCongViec',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'ten', header: 'Tên loại', type: 'string' },
+      { key: 'icon', header: 'Icon', type: 'string' },
+      { key: 'mauSac', header: 'Màu', type: 'string' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  khoanthu: {
+    sheetName: 'KhoanThu',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'tenKhoanThu', header: 'Tên khoản thu', type: 'string' },
+      { key: 'mucThu', header: 'Mức thu', type: 'number' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  dongquy: {
+    sheetName: 'DongQuy',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'khoanThuId', header: 'Mã khoản thu', type: 'string' },
+      { key: 'hocSinhId', header: 'Mã học sinh', type: 'string' },
+      { key: 'hoVaTen', header: 'Họ và tên học sinh', type: 'string' },
+      { key: 'soTien', header: 'Số tiền', type: 'number' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  tailieu: {
+    sheetName: 'TaiLieu',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'tieuDe', header: 'Tiêu đề', type: 'string' },
+      { key: 'moTa', header: 'Mô tả', type: 'string' },
+      { key: 'lienKet', header: 'Liên kết', type: 'string' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
 };
 
 function findColumn_(schema, key) {
