@@ -1,9 +1,32 @@
-import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
-import { isConfigured, listRows, createRow, updateRow, deleteRow } from "../../services/sheetApi";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3 } from "lucide-react";
+import { isConfigured } from "../../services/sheetApi";
+import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
 import LopHocTabs from "../../components/lop-hoc/LopHocTabs";
+import { normalizeText } from "../../utils/text";
 
 const TABLE = "hocsinh";
+const HIDDEN_STORAGE_KEY = "hocsinh_hidden_rows";
+const COLUMN_STORAGE_KEY = "hocsinh_visible_columns";
+const LONG_PRESS_MS = 450;
+
+const SEARCH_FIELDS = [
+  { key: "hoVaTen", label: "Họ và tên" },
+  { key: "ngaySinh", label: "Ngày sinh" },
+  { key: "gioiTinh", label: "Giới tính" },
+  { key: "danToc", label: "Dân tộc" },
+  { key: "noiSinh", label: "Nơi sinh" },
+  { key: "hoTenCha", label: "Họ tên cha" },
+  { key: "hoTenMe", label: "Họ tên mẹ" },
+  { key: "noiCuTru", label: "Nơi cư trú" },
+];
+
+// Some rows synced straight from an existing Google Sheet have no "id" yet
+// (that column is only populated for rows created through this app), so fall
+// back to a natural key to keep row selection/hide state from colliding.
+function getRowKey(row) {
+  return row.id || `${row.hoVaTen}__${row.ngaySinh}`;
+}
 
 const FIELDS = [
   { key: "hoVaTen", label: "Họ và tên học sinh", type: "text" },
@@ -32,6 +55,10 @@ const TABLE_COLUMNS = [
   { key: "hsBanTru", label: "Bán trú" },
 ];
 
+// "stt" (row number) is always shown; only the rest can be toggled off.
+const TOGGLEABLE_COLUMNS = TABLE_COLUMNS.filter((col) => col.key !== "stt");
+const DEFAULT_VISIBLE_COLUMNS = TOGGLEABLE_COLUMNS.map((col) => col.key);
+
 function emptyForm() {
   const form = {};
   FIELDS.forEach((f) => {
@@ -43,8 +70,17 @@ function emptyForm() {
 function HocSinh() {
   const configured = isConfigured();
 
-  const [rows, setRows] = useState(null);
-  const [error, setError] = useState(null);
+  const {
+    data: rows,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useGetRowsQuery(TABLE, { skip: !configured });
+  const error = queryError?.message;
+
+  const [createRowMutation] = useCreateRowMutation();
+  const [updateRowMutation] = useUpdateRowMutation();
+  const [deleteRowMutation] = useDeleteRowMutation();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
@@ -53,17 +89,100 @@ function HocSinh() {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
-  const refresh = () => {
-    setError(null);
-    listRows(TABLE)
-      .then(setRows)
-      .catch((err) => setError(err.message));
-  };
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchField, setSearchField] = useState("hoVaTen");
+  const [hiddenIds, setHiddenIds] = useState(() => {
+    try {
+      const raw = localStorage.getItem(HIDDEN_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [showHidden, setShowHidden] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    try {
+      const raw = localStorage.getItem(COLUMN_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.filter((key) => DEFAULT_VISIBLE_COLUMNS.includes(key));
+      }
+    } catch {
+      // ignore malformed storage
+    }
+    return DEFAULT_VISIBLE_COLUMNS;
+  });
+  const [columnMenuOpen, setColumnMenuOpen] = useState(false);
+
+  const pressTimers = useRef({});
+  const lastPointerType = useRef("mouse");
 
   useEffect(() => {
-    if (configured) refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [configured]);
+    try {
+      localStorage.setItem(HIDDEN_STORAGE_KEY, JSON.stringify(hiddenIds));
+    } catch {
+      // ignore storage errors (e.g. private mode)
+    }
+  }, [hiddenIds]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visibleColumns));
+    } catch {
+      // ignore storage errors (e.g. private mode)
+    }
+  }, [visibleColumns]);
+
+  useEffect(() => {
+    const handleDocClick = (e) => {
+      if (!e.target.closest("[data-hocsinh-row]")) {
+        setSelectedRowId(null);
+      }
+      if (!e.target.closest("[data-column-menu]")) {
+        setColumnMenuOpen(false);
+      }
+    };
+    document.addEventListener("click", handleDocClick);
+    return () => document.removeEventListener("click", handleDocClick);
+  }, []);
+
+  const toggleColumn = (key) => {
+    setVisibleColumns((prev) => {
+      if (prev.includes(key)) {
+        const next = prev.filter((k) => k !== key);
+        return next.length > 0 ? next : prev;
+      }
+      return [...prev, key];
+    });
+  };
+
+  const toggleHidden = (id) => {
+    setHiddenIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  const clearPressTimer = (id) => {
+    if (pressTimers.current[id]) {
+      clearTimeout(pressTimers.current[id]);
+      delete pressTimers.current[id];
+    }
+  };
+
+  const handleRowPointerDown = (e, id) => {
+    lastPointerType.current = e.pointerType;
+    if (e.pointerType === "touch") {
+      clearPressTimer(id);
+      pressTimers.current[id] = setTimeout(() => {
+        setSelectedRowId(id);
+        if (navigator.vibrate) navigator.vibrate(15);
+      }, LONG_PRESS_MS);
+    }
+  };
+
+  const handleRowClick = (id) => {
+    if (lastPointerType.current === "touch") return;
+    setSelectedRowId((prev) => (prev === id ? null : id));
+  };
 
   const openAddForm = () => {
     setEditingRow(null);
@@ -87,11 +206,10 @@ function HocSinh() {
     setFormError(null);
     try {
       if (editingRow) {
-        await updateRow(TABLE, editingRow.id, formData);
+        await updateRowMutation({ table: TABLE, id: editingRow.id, data: formData }).unwrap();
       } else {
-        await createRow(TABLE, formData);
+        await createRowMutation({ table: TABLE, data: formData }).unwrap();
       }
-      refresh();
       setIsFormOpen(false);
     } catch (err) {
       setFormError(err.message);
@@ -104,14 +222,22 @@ function HocSinh() {
     if (!window.confirm(`Xoá học sinh "${row.hoVaTen}"?`)) return;
     setDeletingId(row.id);
     try {
-      await deleteRow(TABLE, row.id);
-      refresh();
+      await deleteRowMutation({ table: TABLE, id: row.id }).unwrap();
     } catch (err) {
       window.alert(err.message);
     } finally {
       setDeletingId(null);
     }
   };
+
+  const normalizedSearch = normalizeText(searchTerm);
+  const filteredRows = (rows || [])
+    .filter((row) => showHidden || !hiddenIds.includes(getRowKey(row)))
+    .filter((row) => !normalizedSearch || normalizeText(row[searchField]).includes(normalizedSearch));
+
+  const displayColumns = TABLE_COLUMNS.filter(
+    (col) => col.key === "stt" || visibleColumns.includes(col.key)
+  );
 
   return (
     <>
@@ -132,26 +258,94 @@ function HocSinh() {
         <NotConfiguredNotice />
       ) : (
         <main className="mt-10 flex flex-col gap-5">
-          <div className="flex justify-end">
-            <button
-              onClick={openAddForm}
-              className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 transition-transform hover:-translate-y-0.5"
-            >
-              <Plus className="h-4 w-4" strokeWidth={2.5} />
-              Thêm học sinh
-            </button>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full items-center gap-1 rounded-full border border-white/10 bg-white/5 pl-2 pr-1 sm:max-w-md">
+              <select
+                value={searchField}
+                onChange={(e) => setSearchField(e.target.value)}
+                aria-label="Tìm theo tiêu chí"
+                className="shrink-0 rounded-full bg-transparent py-2 pl-2 pr-1 text-xs font-medium text-slate-300 outline-none"
+              >
+                {SEARCH_FIELDS.map((f) => (
+                  <option key={f.key} value={f.key} className="bg-slate-900 text-slate-200">
+                    {f.label}
+                  </option>
+                ))}
+              </select>
+              <span className="h-4 w-px shrink-0 bg-white/10" />
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder={`Tìm theo ${SEARCH_FIELDS.find((f) => f.key === searchField)?.label.toLowerCase()}...`}
+                  className="w-full bg-transparent py-2 pl-8 pr-3 text-sm text-white outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3">
+              <div className="relative" data-column-menu>
+                <button
+                  onClick={() => setColumnMenuOpen((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10"
+                >
+                  <Columns3 className="h-3.5 w-3.5" />
+                  Cột hiển thị
+                </button>
+                {columnMenuOpen && (
+                  <div className="absolute right-0 z-20 mt-2 w-56 rounded-2xl border border-white/10 bg-slate-900/95 p-3 shadow-2xl backdrop-blur-xl">
+                    <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Chọn cột hiển thị
+                    </p>
+                    <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+                      {TOGGLEABLE_COLUMNS.map((col) => (
+                        <label
+                          key={col.key}
+                          className="flex items-center gap-2 rounded-lg px-1 py-1.5 text-sm text-slate-300 hover:bg-white/5"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns.includes(col.key)}
+                            onChange={() => toggleColumn(col.key)}
+                            className="h-4 w-4 rounded border-white/20 bg-white/5 accent-emerald-400"
+                          />
+                          {col.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {hiddenIds.length > 0 && (
+                <button
+                  onClick={() => setShowHidden((v) => !v)}
+                  className="flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/10"
+                >
+                  {showHidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {showHidden ? "Ẩn danh sách đã ẩn" : `Hiện ${hiddenIds.length} học sinh đã ẩn`}
+                </button>
+              )}
+              <button
+                onClick={openAddForm}
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-emerald-400 to-blue-500 px-4 py-2 text-sm font-semibold text-slate-900 transition-transform hover:-translate-y-0.5"
+              >
+                <Plus className="h-4 w-4" strokeWidth={2.5} />
+                Thêm học sinh
+              </button>
+            </div>
           </div>
 
           {error && (
             <div className="rounded-2xl border border-rose-400/30 bg-rose-400/10 px-5 py-4 text-sm text-rose-200">
               {error}{" "}
-              <button onClick={refresh} className="ml-2 font-semibold underline">
+              <button onClick={refetch} className="ml-2 font-semibold underline">
                 Thử lại
               </button>
             </div>
           )}
 
-          {rows === null && !error ? (
+          {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-16 text-slate-400">
               <Loader2 className="h-5 w-5 animate-spin" />
               Đang tải danh sách học sinh...
@@ -160,12 +354,16 @@ function HocSinh() {
             <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-16 text-center text-slate-400">
               Chưa có học sinh nào. Bấm "Thêm học sinh" để bắt đầu.
             </div>
-          ) : rows && rows.length > 0 ? (
+          ) : rows && filteredRows.length === 0 ? (
+            <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-16 text-center text-slate-400">
+              Không tìm thấy học sinh phù hợp.
+            </div>
+          ) : rows && filteredRows.length > 0 ? (
             <div className="overflow-x-auto rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl">
               <table className="w-full min-w-[960px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-white/10 text-xs uppercase tracking-wide text-slate-400">
-                    {TABLE_COLUMNS.map((col) => (
+                    {displayColumns.map((col) => (
                       <th key={col.key} className="whitespace-nowrap px-4 py-3 font-medium">
                         {col.label}
                       </th>
@@ -174,46 +372,75 @@ function HocSinh() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.id} className="border-b border-white/5 last:border-0 hover:bg-white/5">
-                      {TABLE_COLUMNS.map((col) => (
-                        <td key={col.key} className="whitespace-nowrap px-4 py-3 text-slate-200">
-                          {col.key === "hsNoiTru" || col.key === "hsBanTru" ? (
-                            row[col.key] ? (
-                              <span className="text-emerald-300">✓</span>
+                  {filteredRows.map((row) => {
+                    const rowKey = getRowKey(row);
+                    const isHidden = hiddenIds.includes(rowKey);
+                    const isSelected = selectedRowId === rowKey;
+                    return (
+                      <tr
+                        key={rowKey}
+                        data-hocsinh-row
+                        onPointerDown={(e) => handleRowPointerDown(e, rowKey)}
+                        onPointerUp={() => clearPressTimer(rowKey)}
+                        onPointerLeave={() => clearPressTimer(rowKey)}
+                        onPointerCancel={() => clearPressTimer(rowKey)}
+                        onClick={() => handleRowClick(rowKey)}
+                        className={`cursor-pointer select-none border-b border-white/5 last:border-0 hover:bg-white/5 ${
+                          isHidden ? "opacity-40" : ""
+                        } ${isSelected ? "bg-white/10" : ""}`}
+                      >
+                        {displayColumns.map((col) => (
+                          <td key={col.key} className="whitespace-nowrap px-4 py-3 text-slate-200">
+                            {col.key === "hsNoiTru" || col.key === "hsBanTru" ? (
+                              row[col.key] ? (
+                                <span className="text-emerald-300">✓</span>
+                              ) : (
+                                <span className="text-slate-600">–</span>
+                              )
                             ) : (
-                              <span className="text-slate-600">–</span>
-                            )
-                          ) : (
-                            row[col.key] || "—"
-                          )}
-                        </td>
-                      ))}
-                      <td className="whitespace-nowrap px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => openEditForm(row)}
-                            aria-label="Sửa"
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-                          >
-                            <Pencil className="h-4 w-4" strokeWidth={2} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(row)}
-                            disabled={deletingId === row.id}
-                            aria-label="Xoá"
-                            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-rose-400/20 hover:text-rose-300 disabled:opacity-50"
-                          >
-                            {deletingId === row.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" strokeWidth={2} />
+                              row[col.key] || "—"
                             )}
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                          </td>
+                        ))}
+                        <td className="whitespace-nowrap px-4 py-3">
+                          {isSelected ? (
+                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                              <button
+                                onClick={() => openEditForm(row)}
+                                aria-label="Sửa"
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                              >
+                                <Pencil className="h-4 w-4" strokeWidth={2} />
+                              </button>
+                              <button
+                                onClick={() => toggleHidden(rowKey)}
+                                aria-label={isHidden ? "Bỏ ẩn" : "Ẩn"}
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
+                              >
+                                {isHidden ? (
+                                  <Eye className="h-4 w-4" strokeWidth={2} />
+                                ) : (
+                                  <EyeOff className="h-4 w-4" strokeWidth={2} />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(row)}
+                                disabled={deletingId === row.id}
+                                aria-label="Xoá"
+                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-rose-400/20 hover:text-rose-300 disabled:opacity-50"
+                              >
+                                {deletingId === row.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" strokeWidth={2} />
+                                )}
+                              </button>
+                            </div>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

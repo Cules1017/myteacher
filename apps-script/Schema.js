@@ -22,6 +22,19 @@ var SCHEMAS = {
       { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
     ],
   },
+  diemdanh: {
+    sheetName: 'DiemDanh',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'ngay', header: 'Ngày', type: 'date' },
+      { key: 'hocSinhId', header: 'Mã học sinh', type: 'string' },
+      { key: 'hoVaTen', header: 'Họ và tên học sinh', type: 'string' },
+      { key: 'loaiVang', header: 'Loại vắng', type: 'string' },
+      { key: 'ghiChu', header: 'Ghi chú', type: 'string' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
 };
 
 function findColumn_(schema, key) {

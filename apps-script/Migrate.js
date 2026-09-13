@@ -50,7 +50,32 @@ function ensureSheetSchema_(schema) {
     sheet.hideColumns(idColIndex + 1);
   }
 
-  return { table: schema.sheetName, created: created, addedHeaders: addedHeaders };
+  var backfilledIds = backfillMissingIds_(sheet, idColIndex);
+
+  return { table: schema.sheetName, created: created, addedHeaders: addedHeaders, backfilledIds: backfilledIds };
+}
+
+/**
+ * Rows typed directly into the Sheet (not created through the app) never get
+ * an id — fill those in so every row has a stable, unique id to reference.
+ * Only touches blank id cells; never overwrites an existing id.
+ */
+function backfillMissingIds_(sheet, idColIndex) {
+  if (idColIndex === -1) return 0;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 0;
+
+  var range = sheet.getRange(2, idColIndex + 1, lastRow - 1, 1);
+  var values = range.getValues();
+  var backfilled = 0;
+  for (var i = 0; i < values.length; i++) {
+    if (!values[i][0]) {
+      values[i][0] = Utilities.getUuid();
+      backfilled++;
+    }
+  }
+  if (backfilled > 0) range.setValues(values);
+  return backfilled;
 }
 
 function onOpen() {
