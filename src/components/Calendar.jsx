@@ -281,7 +281,11 @@ function Calendar() {
                   const items = getDayItems(d);
                   
                   return (
-                    <div key={d.toISOString()} className={`flex flex-col border border-slate-300 dark:border-border rounded-xl p-1.5 transition-colors ${!inMonth ? 'opacity-40' : isFreeDay ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-slate-50 dark:bg-white/[0.02]'} ${expanded ? 'min-h-[100px]' : 'min-h-[140px]'}`}>
+                    <div 
+                      key={d.toISOString()} 
+                      onClick={() => openDayModal(d)}
+                      className={`flex flex-col border border-slate-300 dark:border-border rounded-xl p-1.5 transition-colors cursor-pointer text-left hover:border-primary-400/50 ${!inMonth ? 'opacity-40' : isFreeDay ? 'bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20' : 'bg-slate-50 dark:bg-white/[0.02] hover:bg-surface-hover'} ${expanded ? 'min-h-[100px]' : 'min-h-[140px]'}`}
+                    >
                       <div className="flex justify-center mb-1">
                         <span
                           title={holiday?.tieuDe || undefined}
@@ -308,12 +312,11 @@ function Calendar() {
                            );
                         })}
                         {items.length > 3 && (
-                          <button 
-                            onClick={() => openDayModal(d)}
+                          <div 
                             className="text-[10px] text-text-muted font-medium hover:text-text-base transition-colors mt-0.5 text-left pl-1"
                           >
                             + {items.length - 3} mục khác
-                          </button>
+                          </div>
                         )}
                       </div>
                     </div>
