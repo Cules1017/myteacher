@@ -1,12 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, Users, ListTodo, Settings } from "lucide-react";
+import { Home, FolderOpen, Users, ListTodo, Settings, StickyNote } from "lucide-react";
 
 const items = [
   { to: "/", label: "Trang chủ", icon: Home, end: true },
   { to: "/tai-lieu", label: "Tài liệu", icon: FolderOpen },
   { to: "/lop-hoc", label: "Lớp học", icon: Users },
-  { to: "/cong-viec", label: "Việc cần làm", icon: ListTodo },
+  { to: "/ghi-chu", label: "Ghi chú", icon: StickyNote },
+  { to: "/cong-viec", label: "Việc làm", icon: ListTodo },
   { to: "/cai-dat", label: "Cài đặt", icon: Settings },
 ];
 
@@ -33,7 +34,7 @@ function NavBar() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-safe sm:bottom-auto sm:top-6 sm:pb-0">
-      <div className="relative mb-4 flex items-center gap-0.5 rounded-full border border-border bg-surface-hover/95 px-1.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-2xl backdrop-saturate-150 sm:mb-0 sm:gap-1">
+      <div className="relative mb-4 flex max-w-[360px] w-full items-center justify-around gap-0.5 rounded-full border border-border bg-surface-hover/95 px-1.5 py-1.5 shadow-2xl shadow-black/40 backdrop-blur-2xl backdrop-saturate-150 sm:mb-0 sm:w-auto sm:max-w-none sm:gap-1">
         <span
           className="liquid-pill pointer-events-none absolute inset-y-1.5 rounded-full"
           style={{
@@ -51,7 +52,7 @@ function NavBar() {
               itemRefs.current[i] = el;
             }}
             className={({ isActive }) =>
-              `group relative z-10 flex items-center gap-2 rounded-full p-3 text-sm font-medium transition-colors duration-300 sm:px-5 sm:py-2.5 ${
+              `group relative z-10 flex items-center gap-2 rounded-full p-2.5 sm:p-3 text-sm font-medium transition-colors duration-300 sm:px-5 sm:py-2.5 ${
                 isActive ? "text-slate-900" : "text-text-base hover:text-text-base"
               }`
             }

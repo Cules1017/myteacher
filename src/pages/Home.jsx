@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FolderOpen, Users, Settings, ArrowRight, Calendar as CalendarIcon, Check, Clock, AlertTriangle, Loader2 } from "lucide-react";
+import { FolderOpen, Users, Settings, ArrowRight, Calendar as CalendarIcon, Check, Clock, AlertTriangle, Loader2, StickyNote } from "lucide-react";
 import GlassCard from "../components/GlassCard";
 import Calendar from "../components/Calendar";
 import { useGetRowsQuery, useUpdateRowMutation } from "../store/sheetApi";
@@ -8,6 +8,13 @@ import { isConfigured } from "../services/sheetApi";
 import { getTodoType, getTypeIcon, isOverdue, isDueToday, isDueSoon, todoTypeBadgeClass, formatDateVN } from "../utils/todo";
 
 const shortcuts = [
+  {
+    to: "/ghi-chu",
+    title: "Ghi chú",
+    description: "Ghi chép nhanh, ý tưởng, lưu trữ thông tin.",
+    icon: StickyNote,
+    accent: "from-emerald-400 to-teal-500",
+  },
   {
     to: "/tai-lieu",
     title: "Tài liệu",

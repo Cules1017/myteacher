@@ -10,6 +10,7 @@ import Diem from "./pages/lop-hoc/Diem";
 import QuyThu from "./pages/lop-hoc/QuyThu";
 import ThoiKhoaBieu from "./pages/lop-hoc/ThoiKhoaBieu";
 import NhanXet from "./pages/lop-hoc/NhanXet";
+import GhiChu from "./pages/GhiChu";
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tai-lieu" element={<Documents />} />
+          <Route path="/ghi-chu" element={<GhiChu />} />
           <Route path="/lop-hoc" element={<Navigate to="/lop-hoc/hoc-sinh" replace />} />
           <Route path="/lop-hoc/hoc-sinh" element={<HocSinh />} />
           <Route path="/lop-hoc/diem-danh" element={<DiemDanh />} />

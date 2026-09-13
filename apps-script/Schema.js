@@ -185,6 +185,18 @@ var SCHEMAS = {
       { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
     ],
   },
+  ghichu: {
+    sheetName: 'GhiChu',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'tieuDe', header: 'Tiêu đề', type: 'string' },
+      { key: 'noiDung', header: 'Nội dung', type: 'string' },
+      { key: 'mauSac', header: 'Màu sắc', type: 'string' },
+      { key: 'ghim', header: 'Ghim', type: 'boolean' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
 };
 
 function findColumn_(schema, key) {
@@ -193,3 +205,4 @@ function findColumn_(schema, key) {
   }
   return null;
 }
+// 
