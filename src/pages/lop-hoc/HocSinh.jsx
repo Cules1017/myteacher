@@ -121,9 +121,6 @@ function HocSinh() {
         <h1 className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-3xl font-bold tracking-tight text-transparent sm:text-5xl">
           Quản lý học sinh
         </h1>
-        <p className="max-w-xl text-base text-slate-400 sm:text-lg">
-          Danh sách học sinh trong lớp, đồng bộ trực tiếp với Google Sheet.
-        </p>
       </header>
 
       {!configured ? (

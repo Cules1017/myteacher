@@ -1,41 +1,37 @@
 /**
+ * Route table: mỗi action trỏ tới 1 handler nhỏ nhận `ctx` (đã dựng sẵn
+ * `ctx.found = { schema, sheet }` từ `table` trong query/body — xem Router.js).
+ * Thêm action mới cho bảng bất kỳ = thêm 1 dòng ở đây, không phải sửa doGet/doPost.
+ */
+var ROUTES = {
+  GET: {
+    list: function (ctx) {
+      return listRows_(ctx.found.schema, ctx.found.sheet);
+    },
+  },
+  POST: {
+    create: function (ctx) {
+      return createRow_(ctx.found.schema, ctx.found.sheet, ctx.data);
+    },
+    update: function (ctx) {
+      return updateRow_(ctx.found.schema, ctx.found.sheet, ctx.id, ctx.data);
+    },
+    delete: function (ctx) {
+      return deleteRow_(ctx.found.schema, ctx.found.sheet, ctx.id);
+    },
+  },
+};
+
+/**
  * Web App entry points. Deploy: Deploy > New deployment > Web app.
  * Reads (list) go through doGet (plain cross-origin GET, no CORS preflight).
  * Writes (create/update/delete) go through doPost with a shared-secret token,
  * sent as text/plain from the browser to avoid the JSON preflight CORS issue.
  */
 function doGet(e) {
-  try {
-    var table = e.parameter.table;
-    var action = e.parameter.action || 'list';
-    var found = getSheetForTable_(table);
-    if (!found) return jsonError_('Bảng không tồn tại: ' + table);
-
-    if (action === 'list') {
-      return jsonOk_(listRows_(found.schema, found.sheet));
-    }
-    return jsonError_('Action không hợp lệ: ' + action);
-  } catch (err) {
-    return jsonError_(String(err));
-  }
+  return handleGet_(ROUTES, e);
 }
 
 function doPost(e) {
-  try {
-    var body = JSON.parse(e.postData.contents);
-    if (!checkToken_(body.token)) return jsonError_('Không có quyền truy cập');
-
-    var found = getSheetForTable_(body.table);
-    if (!found) return jsonError_('Bảng không tồn tại: ' + body.table);
-
-    var schema = found.schema;
-    var sheet = found.sheet;
-
-    if (body.action === 'create') return jsonOk_(createRow_(schema, sheet, body.data || {}));
-    if (body.action === 'update') return jsonOk_(updateRow_(schema, sheet, body.id, body.data || {}));
-    if (body.action === 'delete') return jsonOk_(deleteRow_(schema, sheet, body.id));
-    return jsonError_('Action không hợp lệ: ' + body.action);
-  } catch (err) {
-    return jsonError_(String(err));
-  }
+  return handlePost_(ROUTES, e);
 }
