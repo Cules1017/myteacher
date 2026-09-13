@@ -50,13 +50,16 @@ function NavBar() {
               itemRefs.current[i] = el;
             }}
             className={({ isActive }) =>
-              `relative z-10 flex items-center gap-1.5 rounded-full px-3.5 py-2.5 text-xs font-medium transition-colors duration-300 sm:gap-2 sm:px-5 sm:text-sm ${
+              `group relative z-10 flex items-center gap-2 rounded-full p-2.5 text-sm font-medium transition-colors duration-300 sm:px-5 sm:py-2.5 ${
                 isActive ? "text-slate-900" : "text-slate-300 hover:text-white"
               }`
             }
           >
             <Icon className="h-4 w-4 shrink-0" strokeWidth={2.2} />
-            <span>{label}</span>
+            <span className="hidden sm:inline">{label}</span>
+            <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-lg shadow-black/30 transition-opacity duration-150 group-hover:opacity-100 sm:hidden">
+              {label}
+            </span>
           </NavLink>
         ))}
       </div>
