@@ -38,3 +38,36 @@ function doGet(e) {
 function doPost(e) {
   return handlePost_(ROUTES, e);
 }
+
+/**
+ * Hàm định kỳ gọi vào Vercel app để tránh bị sleep (Cold start).
+ */
+function keepVercelAwake() {
+  try {
+    var response = UrlFetchApp.fetch("https://dmyteacher.vercel.app/", { muteHttpExceptions: true });
+    Logger.log("Ping Vercel: " + response.getResponseCode());
+  } catch (e) {
+    Logger.log("Ping Vercel Error: " + e.message);
+  }
+}
+
+/**
+ * Chạy hàm này (Run) 1 lần duy nhất trong trình soạn thảo Apps Script để thiết lập trigger tự động gọi keepVercelAwake mỗi 1 phút.
+ */
+function setupVercelPingTrigger() {
+  // Xóa các trigger cũ nếu có để tránh trùng lặp
+  var triggers = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < triggers.length; i++) {
+    if (triggers[i].getHandlerFunction() === "keepVercelAwake") {
+      ScriptApp.deleteTrigger(triggers[i]);
+    }
+  }
+
+  // Tạo trigger mới chạy mỗi 1 phút
+  ScriptApp.newTrigger("keepVercelAwake")
+    .timeBased()
+    .everyMinutes(1)
+    .create();
+    
+  Logger.log("Đã cài đặt trigger gọi Vercel mỗi 1 phút thành công!");
+}
