@@ -110,6 +110,8 @@ function Calendar() {
   // Render DayItems
   const getDayItems = (d) => {
     const holiday = findHolidayForDate(d, excludedPeriods || []);
+                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                  const isFreeDay = holiday || isWeekend;
     let items = [];
 
     // Tiết dạy
@@ -274,6 +276,8 @@ function Calendar() {
                   const inMonth = !expanded || d.getMonth() === currentMonth;
                   const isToday = isSameDay(d, today);
                   const holiday = findHolidayForDate(d, excludedPeriods || []);
+                  const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                  const isFreeDay = holiday || isWeekend;
                   const items = getDayItems(d);
                   
                   return (
@@ -284,7 +288,7 @@ function Calendar() {
                           className={`flex h-7 w-7 items-center justify-center rounded-full text-sm transition-colors ${
                             isToday
                               ? "bg-gradient-to-br from-primary-400 to-blue-500 font-semibold text-slate-900"
-                              : holiday
+                              : isFreeDay
                                 ? "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-1 ring-blue-300 dark:ring-blue-400/30"
                                 : inMonth ? "text-text-base" : "text-text-muted"
                           }`}
