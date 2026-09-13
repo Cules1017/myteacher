@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, X, Loader2 } from "lucide-react";
 import { isConfigured, listRows, createRow, updateRow, deleteRow } from "../../services/sheetApi";
+import LopHocTabs from "../../components/lop-hoc/LopHocTabs";
 
 const TABLE = "hocsinh";
 
@@ -122,6 +123,10 @@ function HocSinh() {
           Quản lý học sinh
         </h1>
       </header>
+
+      <div className="mt-8">
+        <LopHocTabs />
+      </div>
 
       {!configured ? (
         <NotConfiguredNotice />
