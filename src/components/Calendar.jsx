@@ -281,7 +281,7 @@ function Calendar() {
                   const items = getDayItems(d);
                   
                   return (
-                    <div key={d.toISOString()} className={`flex flex-col border border-slate-300 dark:border-border rounded-xl p-1.5 transition-colors ${inMonth ? 'bg-slate-50 dark:bg-white/[0.02]' : 'opacity-40'} ${expanded ? 'min-h-[100px]' : 'min-h-[140px]'}`}>
+                    <div key={d.toISOString()} className={`flex flex-col border border-slate-300 dark:border-border rounded-xl p-1.5 transition-colors ${!inMonth ? 'opacity-40' : isFreeDay ? 'bg-blue-50 dark:bg-blue-500/10' : 'bg-slate-50 dark:bg-white/[0.02]'} ${expanded ? 'min-h-[100px]' : 'min-h-[140px]'}`}>
                       <div className="flex justify-center mb-1">
                         <span
                           title={holiday?.tieuDe || undefined}
@@ -289,7 +289,7 @@ function Calendar() {
                             isToday
                               ? "bg-gradient-to-br from-primary-400 to-blue-500 font-semibold text-slate-900"
                               : isFreeDay
-                                ? "bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-200 ring-1 ring-blue-300 dark:ring-blue-400/30"
+                                ? "bg-blue-100 dark:bg-blue-500/30 text-blue-700 dark:text-blue-200 ring-1 ring-blue-300 dark:ring-blue-400/50"
                                 : inMonth ? "text-text-base" : "text-text-muted"
                           }`}
                         >
