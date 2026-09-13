@@ -1,21 +1,10 @@
-import { useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useGetRowsQuery } from "../store/sheetApi";
+import { isConfigured } from "../services/sheetApi";
+import { startOfWeek, addDays, buildTeachingWeeks, getTeachingWeek, findHolidayForDate } from "../utils/schoolYear";
 
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-
-function startOfWeek(date) {
-  const d = new Date(date);
-  const day = (d.getDay() + 6) % 7;
-  d.setDate(d.getDate() - day);
-  d.setHours(0, 0, 0, 0);
-  return d;
-}
-
-function addDays(date, amount) {
-  const d = new Date(date);
-  d.setDate(d.getDate() + amount);
-  return d;
-}
 
 function addMonths(date, amount) {
   const d = new Date(date);
@@ -44,6 +33,12 @@ function getMonthGridDays(date) {
   return days;
 }
 
+function chunkWeeks(days) {
+  const weeks = [];
+  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
+  return weeks;
+}
+
 function formatLabel(expanded, referenceDate) {
   if (expanded) {
     return `Tháng ${referenceDate.getMonth() + 1}, ${referenceDate.getFullYear()}`;
@@ -60,12 +55,25 @@ function Calendar() {
   const [referenceDate, setReferenceDate] = useState(new Date());
   const today = new Date();
 
+  const configured = isConfigured();
+  const { data: namhocRows } = useGetRowsQuery("namhoc", { skip: !configured });
+  const { data: excludedPeriods } = useGetRowsQuery("ngayloaitru", { skip: !configured });
+  const namhoc = namhocRows?.[0];
+
+  const schedule = useMemo(() => {
+    if (!namhoc?.ngayBatDau || !namhoc?.ngayKetThuc) return [];
+    return buildTeachingWeeks({ ...namhoc, excludedPeriods: excludedPeriods || [] });
+  }, [namhoc, excludedPeriods]);
+
   const goPrev = () => setReferenceDate((d) => (expanded ? addMonths(d, -1) : addDays(d, -7)));
   const goNext = () => setReferenceDate((d) => (expanded ? addMonths(d, 1) : addDays(d, 7)));
   const goToday = () => setReferenceDate(new Date());
 
   const days = expanded ? getMonthGridDays(referenceDate) : getWeekDays(referenceDate);
   const currentMonth = referenceDate.getMonth();
+  const weekRows = expanded ? chunkWeeks(days) : [days];
+
+  const currentWeekLabel = schedule.length > 0 ? getTeachingWeek(referenceDate, schedule)?.label : null;
 
   return (
     <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
@@ -78,7 +86,10 @@ function Calendar() {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-white">Lịch</h2>
-            <p className="text-xs text-slate-400">{formatLabel(expanded, referenceDate)}</p>
+            <p className="text-xs text-slate-400">
+              {formatLabel(expanded, referenceDate)}
+              {!expanded && currentWeekLabel && <span className="text-slate-500"> · {currentWeekLabel}</span>}
+            </p>
           </div>
         </div>
 
@@ -114,31 +125,52 @@ function Calendar() {
         </button>
       </div>
 
-      <div key={expanded ? "month" : "week"} className="calendar-fade relative mt-4 grid grid-cols-7 gap-y-2 text-center">
-        {WEEKDAYS.map((w) => (
-          <span key={w} className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
-            {w}
-          </span>
-        ))}
-        {days.map((d) => {
-          const inMonth = !expanded || d.getMonth() === currentMonth;
-          const isToday = isSameDay(d, today);
-          return (
-            <div key={d.toISOString()} className="flex items-center justify-center py-1">
-              <span
-                className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition-colors ${
-                  isToday
-                    ? "bg-gradient-to-br from-emerald-400 to-blue-500 font-semibold text-slate-900"
-                    : inMonth
-                      ? "text-slate-200"
-                      : "text-slate-600"
-                }`}
-              >
-                {d.getDate()}
+      <div key={expanded ? "month" : "week"} className="calendar-fade relative mt-4">
+        <div className={`grid gap-y-2 text-center ${schedule.length > 0 && expanded ? "grid-cols-[2.25rem_1fr]" : "grid-cols-1"}`}>
+          {schedule.length > 0 && expanded && <span />}
+          <div className="grid grid-cols-7 gap-y-2 text-center">
+            {WEEKDAYS.map((w) => (
+              <span key={w} className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {w}
               </span>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+
+          {weekRows.map((weekDays, i) => (
+            <Fragment key={i}>
+              {schedule.length > 0 && expanded && (
+                <span key={`label-${i}`} className="flex items-center justify-center text-[10px] font-medium text-slate-500">
+                  {getTeachingWeek(weekDays[0], schedule)?.weekNumber ?? "—"}
+                </span>
+              )}
+              <div key={`week-${i}`} className="grid grid-cols-7 gap-y-2 text-center">
+                {weekDays.map((d) => {
+                  const inMonth = !expanded || d.getMonth() === currentMonth;
+                  const isToday = isSameDay(d, today);
+                  const holiday = findHolidayForDate(d, excludedPeriods || []);
+                  return (
+                    <div key={d.toISOString()} className="flex items-center justify-center py-1">
+                      <span
+                        title={holiday?.tieuDe}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm transition-colors ${
+                          isToday
+                            ? "bg-gradient-to-br from-emerald-400 to-blue-500 font-semibold text-slate-900"
+                            : holiday
+                              ? "bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/30"
+                              : inMonth
+                                ? "text-slate-200"
+                                : "text-slate-600"
+                        }`}
+                      >
+                        {d.getDate()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Fragment>
+          ))}
+        </div>
       </div>
     </div>
   );

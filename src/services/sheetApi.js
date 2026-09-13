@@ -37,3 +37,9 @@ async function postAction(table, action, payload) {
 export const createRow = (table, data) => postAction(table, "create", { data });
 export const updateRow = (table, id, data) => postAction(table, "update", { id, data });
 export const deleteRow = (table, id) => postAction(table, "delete", { id });
+
+// Creates a brand-new Google Sheet (in the Apps Script owner's Drive) with
+// the given headers/rows/cellColors and returns its URL — the "Google
+// Sheets" alternative to downloading an .xlsx file. Not table-scoped, so it
+// bypasses the RTK Query table cache (see store/sheetApi.js).
+export const exportSheet = (payload) => postAction(undefined, "exportSheet", { data: payload });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3 } from "lucide-react";
 import { isConfigured } from "../../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
@@ -368,7 +368,6 @@ function HocSinh() {
                         {col.label}
                       </th>
                     ))}
-                    <th className="px-4 py-3 font-medium">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -377,68 +376,71 @@ function HocSinh() {
                     const isHidden = hiddenIds.includes(rowKey);
                     const isSelected = selectedRowId === rowKey;
                     return (
-                      <tr
-                        key={rowKey}
-                        data-hocsinh-row
-                        onPointerDown={(e) => handleRowPointerDown(e, rowKey)}
-                        onPointerUp={() => clearPressTimer(rowKey)}
-                        onPointerLeave={() => clearPressTimer(rowKey)}
-                        onPointerCancel={() => clearPressTimer(rowKey)}
-                        onClick={() => handleRowClick(rowKey)}
-                        className={`cursor-pointer select-none border-b border-white/5 last:border-0 hover:bg-white/5 ${
-                          isHidden ? "opacity-40" : ""
-                        } ${isSelected ? "bg-white/10" : ""}`}
-                      >
-                        {displayColumns.map((col) => (
-                          <td key={col.key} className="whitespace-nowrap px-4 py-3 text-slate-200">
-                            {col.key === "hsNoiTru" || col.key === "hsBanTru" ? (
-                              row[col.key] ? (
-                                <span className="text-emerald-300">✓</span>
+                      <Fragment key={rowKey}>
+                        <tr
+                          data-hocsinh-row
+                          onPointerDown={(e) => handleRowPointerDown(e, rowKey)}
+                          onPointerUp={() => clearPressTimer(rowKey)}
+                          onPointerLeave={() => clearPressTimer(rowKey)}
+                          onPointerCancel={() => clearPressTimer(rowKey)}
+                          onClick={() => handleRowClick(rowKey)}
+                          className={`cursor-pointer select-none border-b border-white/5 last:border-0 hover:bg-white/5 ${
+                            isHidden ? "opacity-40" : ""
+                          } ${isSelected ? "bg-white/10" : ""}`}
+                        >
+                          {displayColumns.map((col) => (
+                            <td key={col.key} className="whitespace-nowrap px-4 py-3 text-slate-200">
+                              {col.key === "hsNoiTru" || col.key === "hsBanTru" ? (
+                                row[col.key] ? (
+                                  <span className="text-emerald-300">✓</span>
+                                ) : (
+                                  <span className="text-slate-600">–</span>
+                                )
                               ) : (
-                                <span className="text-slate-600">–</span>
-                              )
-                            ) : (
-                              row[col.key] || "—"
-                            )}
-                          </td>
-                        ))}
-                        <td className="whitespace-nowrap px-4 py-3">
-                          {isSelected ? (
-                            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                              <button
-                                onClick={() => openEditForm(row)}
-                                aria-label="Sửa"
-                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-                              >
-                                <Pencil className="h-4 w-4" strokeWidth={2} />
-                              </button>
-                              <button
-                                onClick={() => toggleHidden(rowKey)}
-                                aria-label={isHidden ? "Bỏ ẩn" : "Ẩn"}
-                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
-                              >
-                                {isHidden ? (
-                                  <Eye className="h-4 w-4" strokeWidth={2} />
-                                ) : (
-                                  <EyeOff className="h-4 w-4" strokeWidth={2} />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleDelete(row)}
-                                disabled={deletingId === row.id}
-                                aria-label="Xoá"
-                                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-rose-400/20 hover:text-rose-300 disabled:opacity-50"
-                              >
-                                {deletingId === row.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Trash2 className="h-4 w-4" strokeWidth={2} />
-                                )}
-                              </button>
-                            </div>
-                          ) : null}
-                        </td>
-                      </tr>
+                                row[col.key] || "—"
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                        {isSelected && (
+                          <tr data-hocsinh-row className="border-b border-white/5 bg-white/5 last:border-0">
+                            <td colSpan={displayColumns.length} className="px-4 py-2">
+                              <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-2">
+                                <button
+                                  onClick={() => openEditForm(row)}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-white/10 sm:rounded-full"
+                                >
+                                  <Pencil className="h-4 w-4" strokeWidth={2} />
+                                  Sửa
+                                </button>
+                                <button
+                                  onClick={() => toggleHidden(rowKey)}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-200 transition-colors hover:bg-white/10 sm:rounded-full"
+                                >
+                                  {isHidden ? (
+                                    <Eye className="h-4 w-4" strokeWidth={2} />
+                                  ) : (
+                                    <EyeOff className="h-4 w-4" strokeWidth={2} />
+                                  )}
+                                  {isHidden ? "Bỏ ẩn" : "Ẩn"}
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(row)}
+                                  disabled={deletingId === row.id}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-rose-300 transition-colors hover:bg-rose-400/20 disabled:opacity-50 sm:rounded-full"
+                                >
+                                  {deletingId === row.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4" strokeWidth={2} />
+                                  )}
+                                  Xoá
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     );
                   })}
                 </tbody>

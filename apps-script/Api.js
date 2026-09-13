@@ -19,6 +19,9 @@ var ROUTES = {
     delete: function (ctx) {
       return deleteRow_(ctx.found.schema, ctx.found.sheet, ctx.id);
     },
+    exportSheet: function (ctx) {
+      return exportSheet_(ctx);
+    },
   },
 };
 

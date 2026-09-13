@@ -35,6 +35,59 @@ var SCHEMAS = {
       { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
     ],
   },
+  namhoc: {
+    sheetName: 'NamHoc',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'ngayBatDau', header: 'Ngày bắt đầu', type: 'date' },
+      { key: 'ngayKetThuc', header: 'Ngày kết thúc', type: 'date' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  ngayloaitru: {
+    sheetName: 'NgayLoaiTru',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'tieuDe', header: 'Tiêu đề', type: 'string' },
+      { key: 'tuNgay', header: 'Từ ngày', type: 'date' },
+      { key: 'denNgay', header: 'Đến ngày', type: 'date' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  monhoc: {
+    sheetName: 'MonHoc',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'tenMon', header: 'Tên môn học', type: 'string' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  cotdiem: {
+    sheetName: 'CotDiem',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'monHocId', header: 'Mã môn học', type: 'string' },
+      { key: 'tenCot', header: 'Tên cột điểm', type: 'string' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
+  diem: {
+    sheetName: 'Diem',
+    columns: [
+      { key: 'id', header: 'ID', type: 'string' },
+      { key: 'monHocId', header: 'Mã môn học', type: 'string' },
+      { key: 'cotDiemId', header: 'Mã cột điểm', type: 'string' },
+      { key: 'hocSinhId', header: 'Mã học sinh', type: 'string' },
+      { key: 'hoVaTen', header: 'Họ và tên học sinh', type: 'string' },
+      { key: 'diem', header: 'Điểm', type: 'number' },
+      { key: 'createdAt', header: 'Created At', type: 'datetime' },
+      { key: 'updatedAt', header: 'Updated At', type: 'datetime' },
+    ],
+  },
 };
 
 function findColumn_(schema, key) {
