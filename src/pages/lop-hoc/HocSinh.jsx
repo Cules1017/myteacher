@@ -116,8 +116,6 @@ function HocSinh() {
   });
   const [columnMenuOpen, setColumnMenuOpen] = useState(false);
 
-  const pressTimers = useRef({});
-  const lastPointerType = useRef("mouse");
 
   useEffect(() => {
     try {
@@ -162,26 +160,7 @@ function HocSinh() {
     setHiddenIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   };
 
-  const clearPressTimer = (id) => {
-    if (pressTimers.current[id]) {
-      clearTimeout(pressTimers.current[id]);
-      delete pressTimers.current[id];
-    }
-  };
-
-  const handleRowPointerDown = (e, id) => {
-    lastPointerType.current = e.pointerType;
-    if (e.pointerType === "touch") {
-      clearPressTimer(id);
-      pressTimers.current[id] = setTimeout(() => {
-        setSelectedRowId(id);
-        if (navigator.vibrate) navigator.vibrate(15);
-      }, LONG_PRESS_MS);
-    }
-  };
-
   const handleRowClick = (id) => {
-    if (lastPointerType.current === "touch") return;
     setSelectedRowId((prev) => (prev === id ? null : id));
   };
 
@@ -377,10 +356,6 @@ function HocSinh() {
                       <Fragment key={rowKey}>
                         <tr
                           data-hocsinh-row
-                          onPointerDown={(e) => handleRowPointerDown(e, rowKey)}
-                          onPointerUp={() => clearPressTimer(rowKey)}
-                          onPointerLeave={() => clearPressTimer(rowKey)}
-                          onPointerCancel={() => clearPressTimer(rowKey)}
                           onClick={() => handleRowClick(rowKey)}
                           className={`cursor-pointer select-none border-b border-border last:border-0 hover:bg-surface ${
                             isHidden ? "opacity-40" : ""
