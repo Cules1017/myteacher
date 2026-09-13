@@ -22,6 +22,21 @@ var ROUTES = {
     exportSheet: function (ctx) {
       return exportSheet_(ctx);
     },
+    getBotConfig: function (ctx) {
+      return getBotConfig_();
+    },
+    setBotConfig: function (ctx) {
+      return setBotConfig_(ctx.data);
+    },
+    registerZaloWebhook: function (ctx) {
+      return registerZaloWebhook_();
+    },
+    testGeminiKey: function (ctx) {
+      return testGeminiKey_();
+    },
+    debugGeminiIntent: function (ctx) {
+      return debugGeminiIntent_(ctx.data);
+    },
   },
 };
 
@@ -36,6 +51,12 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  // Zalo's webhook has its own secret (in the URL, since Apps Script can't read
+  // custom request headers) and no `token` field — short-circuit before the
+  // normal checkToken_ gate in handlePost_ would otherwise reject it.
+  if (e && e.parameter && e.parameter.source === 'zalobot') {
+    return handleZaloWebhook_(e);
+  }
   return handlePost_(ROUTES, e);
 }
 

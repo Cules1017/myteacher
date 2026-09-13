@@ -214,7 +214,7 @@ function GhiChu() {
                     <button
                       onClick={(e) => togglePin(e, row)}
                       disabled={togglingPinId === row.id}
-                      className={`shrink-0 p-1 rounded-full transition-colors ${row.ghim ? 'text-amber-500 hover:bg-amber-500/10' : 'text-text-muted opacity-0 group-hover:opacity-100 hover:text-text-base hover:bg-surface-hover'}`}
+                      className={`shrink-0 p-1 rounded-full transition-colors ${row.ghim ? 'text-amber-500 hover:bg-amber-500/10' : 'text-text-muted opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-text-base hover:bg-surface-hover'}`}
                     >
                       {togglingPinId === row.id ? <Loader2 className="h-4 w-4 animate-spin" /> : (row.ghim ? <Pin className="h-4 w-4 fill-current" /> : <Pin className="h-4 w-4" />)}
                     </button>
@@ -224,7 +224,7 @@ function GhiChu() {
                     {row.noiDung}
                   </p>
                   
-                  <div className="mt-auto flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity pt-4 border-t border-text-muted/10">
+                  <div className="mt-auto flex items-center justify-between opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pt-4 border-t border-text-muted/10">
                     <span className="text-xs text-text-muted">
                       {row.updatedAt ? new Date(row.updatedAt).toLocaleDateString('vi-VN') : ''}
                     </span>

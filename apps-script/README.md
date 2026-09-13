@@ -57,3 +57,27 @@ lại (deployment cũ tự dùng code mới), trừ khi bạn đổi `doGet`/`do
 
 Thêm 1 entry vào `SCHEMAS` trong `Schema.js` (tên sheet + danh sách cột), `clasp push`, rồi chạy lại
 hàm `migrate()` một lần — sheet mới sẽ tự được tạo, không đụng tới các bảng đã có.
+
+## Chatbot Zalo (`ZaloBot.js`)
+
+Cho phép nhắn tin tự nhiên với bot Zalo để xem/thêm/sửa/xoá dữ liệu (Gemini AI đọc hiểu yêu cầu,
+mọi thao tác thêm/sửa/xoá đều được bot hỏi lại xác nhận trước khi thực hiện). Cần 2 thứ chỉ bạn tự
+lấy được (đăng nhập tài khoản riêng):
+
+1. **Bot Token**: mở app Zalo → tìm official account **"Zalo Bot Manager"** → chọn "Tạo bot" →
+   đặt tên bắt đầu bằng "Bot" (vd "Bot Cô My") → tạo xong Zalo sẽ nhắn Bot Token cho bạn.
+2. **Gemini API Key**: vào [Google AI Studio](https://aistudio.google.com/apikey) → tạo API key.
+
+Sau khi có 2 thứ trên:
+
+3. `clasp push` để đẩy `ZaloBot.js` lên (không cần deployment mới vì `doGet`/`doPost` giữ nguyên
+   chữ ký, chỉ thêm route mới trong `Api.js`).
+4. Vào trang **Cài đặt** của web app → mục "Chatbot Zalo (Gemini AI)" → dán Bot Token + Gemini API
+   Key → **Lưu cấu hình**.
+5. Bấm **Đăng ký Webhook với Zalo** (gọi `setWebhook` của Zalo giúp bạn, không cần tự curl/Postman).
+6. Nhắn thử với bot trong Zalo, ví dụ: "hôm nay có học sinh nào vắng không" (xem ngay) hoặc
+   "thêm việc họp phụ huynh ngày mai" (bot sẽ hỏi xác nhận trước khi lưu).
+
+Ghi chú bảo mật: Bot Token / Gemini API Key được lưu trong **Script Properties** (giống
+`API_TOKEN`), không lưu trong Sheet — route `list` (GET) hiện không có xác thực nên tuyệt đối
+không được đặt bất kỳ secret nào vào một bảng trong `SCHEMAS`.

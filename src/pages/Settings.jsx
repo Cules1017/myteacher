@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Moon, Info, CalendarRange, CalendarOff, CalendarClock, Plus, Trash2, Loader2, Link, Sun, Monitor, Palette } from "lucide-react";
+import { Moon, Info, CalendarRange, CalendarOff, CalendarClock, Plus, Trash2, Loader2, Link, Sun, Monitor, Palette, Bot, Copy, Check, RefreshCw, Sparkles } from "lucide-react";
 import GlassCard from "../components/GlassCard";
 import LoadingState from "../components/LoadingState";
-import { isConfigured } from "../services/sheetApi";
+import { isConfigured, getBotConfig, setBotConfig, registerZaloWebhook, testGeminiKey } from "../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../store/sheetApi";
 import { SESSIONS } from "../utils/timetable";
 import { useTheme } from "../contexts/ThemeContext";
@@ -111,6 +111,7 @@ function Settings() {
         <PeriodTimesSection />
         <ExcludedDatesSection />
         <TaiLieuSection />
+        <ZaloBotSection />
       </main>
     </>
   );
@@ -472,6 +473,260 @@ function ExcludedDatesSection() {
               Thêm
             </button>
           </form>
+        </>
+      )}
+      {error && <p className="relative text-sm text-rose-300">{error}</p>}
+    </GlassCard>
+  );
+}
+
+function ZaloBotSection() {
+  const configured = isConfigured();
+
+  const [config, setConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [zaloBotToken, setZaloBotToken] = useState("");
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [geminiModel, setGeminiModel] = useState("");
+  const [allowedChatId, setAllowedChatId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [registering, setRegistering] = useState(false);
+  const [registerOk, setRegisterOk] = useState(false);
+  const [registerError, setRegisterError] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [savedJustNow, setSavedJustNow] = useState(false);
+  const [testingGemini, setTestingGemini] = useState(false);
+  const [geminiTestResult, setGeminiTestResult] = useState(null);
+
+  useEffect(() => {
+    if (!configured) return;
+    (async () => {
+      setLoading(true);
+      try {
+        const c = await getBotConfig();
+        setConfig(c);
+        setAllowedChatId(c.allowedChatId || "");
+        setGeminiModel(c.geminiModel || "");
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [configured]);
+
+  if (!configured) return null;
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setRegisterOk(false);
+    setSavedJustNow(false);
+    try {
+      const data = { allowedChatId, geminiModel: geminiModel.trim() };
+      if (zaloBotToken.trim()) data.zaloBotToken = zaloBotToken.trim();
+      if (geminiApiKey.trim()) data.geminiApiKey = geminiApiKey.trim();
+      await setBotConfig(data);
+      // Re-fetch (rather than trust the mutation's own response) so the
+      // confirmation genuinely reflects what the server persisted, not just
+      // an optimistic echo of what we sent.
+      const fresh = await getBotConfig();
+      setConfig(fresh);
+      setZaloBotToken("");
+      setGeminiApiKey("");
+      setGeminiModel(fresh.geminiModel || "");
+      setSavedJustNow(true);
+      setTimeout(() => setSavedJustNow(false), 4000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestGemini = async () => {
+    setTestingGemini(true);
+    setGeminiTestResult(null);
+    try {
+      const res = await testGeminiKey();
+      setGeminiTestResult({ ok: true, message: res.reply });
+    } catch (err) {
+      setGeminiTestResult({ ok: false, message: err.message });
+    } finally {
+      setTestingGemini(false);
+    }
+  };
+
+  const handleRegister = async () => {
+    setRegistering(true);
+    setRegisterError(null);
+    setRegisterOk(false);
+    try {
+      await registerZaloWebhook();
+      setRegisterOk(true);
+    } catch (err) {
+      setRegisterError(err.message);
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const handleCopyWebhook = async () => {
+    if (!config?.webhookUrl) return;
+    try {
+      await navigator.clipboard.writeText(config.webhookUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable — the URL is still selectable/copyable by hand.
+    }
+  };
+
+  return (
+    <GlassCard accent="from-blue-500 to-cyan-400" className="flex-col items-stretch gap-4 hover:-translate-y-0">
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-surface-hover ring-1 ring-border">
+          <Bot className="h-6 w-6" strokeWidth={2} />
+        </div>
+        <div className="relative flex flex-col gap-0.5">
+          <h2 className="font-semibold text-text-base">Chatbot Zalo (Gemini AI)</h2>
+          <p className="text-sm text-text-base">
+            Nhắn tin tự nhiên với bot Zalo để xem/thêm/sửa/xoá dữ liệu — mọi thao tác thêm/sửa/xoá đều cần bạn xác nhận lại, xem dữ liệu thì trả lời ngay.
+          </p>
+        </div>
+      </div>
+
+      {loading ? (
+        <LoadingState emoji="🤖" className="py-4" />
+      ) : (
+        <>
+          <form onSubmit={handleSave} className="relative flex flex-col gap-3">
+            <label className="flex flex-col gap-1.5 text-sm text-text-base">
+              Bot Token (lấy từ "Zalo Bot Manager" trong app Zalo)
+              <input
+                type="password"
+                value={zaloBotToken}
+                onChange={(e) => setZaloBotToken(e.target.value)}
+                placeholder={
+                  config?.zaloBotTokenSet
+                    ? `Đã lưu (${config.zaloBotTokenPreview}) — nhập để đổi`
+                    : "Dán Bot Token vào đây"
+                }
+                className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none placeholder:text-text-muted focus:border-primary-400/50"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-text-base">
+              Gemini API Key (lấy từ Google AI Studio)
+              <input
+                type="password"
+                value={geminiApiKey}
+                onChange={(e) => setGeminiApiKey(e.target.value)}
+                placeholder={
+                  config?.geminiApiKeySet
+                    ? `Đã lưu (${config.geminiApiKeyPreview}) — nhập để đổi`
+                    : "Dán Gemini API key vào đây"
+                }
+                className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none placeholder:text-text-muted focus:border-primary-400/50"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm text-text-base">
+              Model AI (Gemini)
+              <input
+                type="text"
+                value={geminiModel}
+                onChange={(e) => setGeminiModel(e.target.value)}
+                placeholder="gemini-3.6-flash"
+                className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none placeholder:text-text-muted focus:border-primary-400/50"
+              />
+              <span className="text-xs text-text-muted">
+                Đổi khi Google ngừng hỗ trợ model cũ (bot sẽ báo lỗi rõ nếu model sai/hết hạn khi bạn bấm "Kiểm tra" bên dưới).
+              </span>
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={handleTestGemini}
+                disabled={testingGemini}
+                className="flex w-fit items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover disabled:opacity-50"
+              >
+                {testingGemini ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" strokeWidth={2} />
+                )}
+                Kiểm tra Gemini key
+              </button>
+              {geminiTestResult && (
+                <span className={`text-xs ${geminiTestResult.ok ? "text-emerald-400" : "text-rose-300"}`}>
+                  {geminiTestResult.ok ? `Gemini trả lời: "${geminiTestResult.message}"` : geminiTestResult.message}
+                </span>
+              )}
+            </div>
+            <label className="flex flex-col gap-1.5 text-sm text-text-base">
+              Chỉ cho phép ID Zalo này dùng bot (không bắt buộc)
+              <input
+                type="text"
+                value={allowedChatId}
+                onChange={(e) => setAllowedChatId(e.target.value)}
+                placeholder="Để trống = ai nhắn cũng được"
+                className="rounded-xl border border-border bg-transparent px-3 py-2 text-text-base outline-none placeholder:text-text-muted focus:border-primary-400/50"
+              />
+            </label>
+            <div className="flex items-center gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-primary-400 to-blue-500 px-4 py-2 text-sm font-semibold text-bg-base disabled:opacity-60"
+              >
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                Lưu cấu hình
+              </button>
+              {savedJustNow && (
+                <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-400">
+                  <Check className="h-4 w-4" />
+                  Đã lưu thành công
+                </span>
+              )}
+            </div>
+          </form>
+
+          {config?.webhookSecretSet && (
+            <div className="relative flex flex-col gap-2 rounded-2xl border border-border bg-surface p-4">
+              <span className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                Webhook URL (đăng ký với Zalo)
+              </span>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-lg bg-surface-hover px-2 py-1.5 text-xs text-text-base">
+                  {config.webhookUrl}
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopyWebhook}
+                  aria-label="Sao chép"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-base transition-colors hover:bg-surface-hover"
+                >
+                  {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" strokeWidth={2} />}
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={handleRegister}
+                disabled={registering || !config?.zaloBotTokenSet}
+                className="mt-1 flex w-fit items-center gap-2 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-text-base transition-colors hover:bg-surface-hover disabled:opacity-50"
+              >
+                {registering ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" strokeWidth={2} />
+                )}
+                Đăng ký Webhook với Zalo
+              </button>
+              {registerOk && <p className="text-xs text-emerald-400">Đã đăng ký webhook thành công.</p>}
+              {registerError && <p className="text-xs text-rose-300">{registerError}</p>}
+            </div>
+          )}
         </>
       )}
       {error && <p className="relative text-sm text-rose-300">{error}</p>}

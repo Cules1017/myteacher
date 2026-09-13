@@ -55,6 +55,7 @@ function CongViec() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [togglingId, setTogglingId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [typeManagerOpen, setTypeManagerOpen] = useState(false);
   const [typeManagerForForm, setTypeManagerForForm] = useState(false);
   const [confirmConfig, setConfirmConfig] = useState(null);
@@ -124,25 +125,29 @@ function CongViec() {
     }
   };
 
-  const handleDelete = () => {
-    if (!editingRow) return;
+  const handleDelete = (rowArg) => {
+    const target = rowArg || editingRow;
+    if (!target) return;
+    const fromList = Boolean(rowArg);
     setConfirmConfig({
       isOpen: true,
       title: "Xoá việc",
-      message: `Bạn có chắc chắn muốn xoá việc "${editingRow.tieuDe}"?`,
+      message: `Bạn có chắc chắn muốn xoá việc "${target.tieuDe}"?`,
       isDangerous: true,
       onConfirm: async () => {
         setConfirmConfig(prev => ({ ...prev, isLoading: true }));
-        setDeleting(true);
+        if (fromList) setDeletingId(target.id);
+        else setDeleting(true);
         try {
-          await deleteRowMutation({ table: TABLE, id: editingRow.id }).unwrap();
+          await deleteRowMutation({ table: TABLE, id: target.id }).unwrap();
           setIsFormOpen(false);
           setConfirmConfig(null);
         } catch (err) {
           window.alert(err.message);
           setConfirmConfig(prev => ({ ...prev, isLoading: false }));
         } finally {
-          setDeleting(false);
+          if (fromList) setDeletingId(null);
+          else setDeleting(false);
         }
       },
       onCancel: () => setConfirmConfig(null),
@@ -282,6 +287,8 @@ function CongViec() {
                   onToggle={() => toggleDone(row)}
                   toggling={togglingId === row.id}
                   onEdit={() => openEdit(row)}
+                  onQuickDelete={() => handleDelete(row)}
+                  deleting={deletingId === row.id}
                 />
               ))}
             </ul>
@@ -316,11 +323,13 @@ function CongViec() {
           deleteRowMutation={deleteRowMutation}
         />
       )}
+
+      {confirmConfig && <ConfirmModal {...confirmConfig} />}
     </>
   );
 }
 
-function TodoItem({ row, customTypes, onToggle, toggling, onEdit }) {
+function TodoItem({ row, customTypes, onToggle, toggling, onEdit, onQuickDelete, deleting }) {
   const type = getTodoType(row.loai, customTypes);
   const Icon = getTypeIcon(type.icon);
   const overdue = isOverdue(row);
@@ -372,7 +381,19 @@ function TodoItem({ row, customTypes, onToggle, toggling, onEdit }) {
         {row.moTa && <span className="text-sm text-text-base">{row.moTa}</span>}
       </button>
 
-      <Pencil className="mt-1 h-4 w-4 shrink-0 text-text-muted" strokeWidth={2} />
+      <Pencil className="mt-1 hidden h-4 w-4 shrink-0 text-text-muted sm:block" strokeWidth={2} />
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onQuickDelete();
+        }}
+        disabled={deleting}
+        aria-label="Xoá nhanh"
+        className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-rose-400/10 hover:text-rose-300 disabled:opacity-50"
+      >
+        {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" strokeWidth={2} />}
+      </button>
     </li>
   );
 }
@@ -682,6 +703,8 @@ function TypeManagerModal({ customTypes, onClose, onCreated, onDeleted, createRo
           </div>
         </form>
       </div>
+
+      {confirmConfig && <ConfirmModal {...confirmConfig} />}
     </div>
   );
 }

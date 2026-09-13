@@ -43,3 +43,11 @@ export const deleteRow = (table, id) => postAction(table, "delete", { id });
 // Sheets" alternative to downloading an .xlsx file. Not table-scoped, so it
 // bypasses the RTK Query table cache (see store/sheetApi.js).
 export const exportSheet = (payload) => postAction(undefined, "exportSheet", { data: payload });
+
+// Zalo bot config (Bot Token / Gemini API key / webhook secret) — stored in
+// Apps Script's PropertiesService, not a Sheet table, so these go through
+// dedicated actions rather than the generic table CRUD above.
+export const getBotConfig = () => postAction(undefined, "getBotConfig", {});
+export const setBotConfig = (data) => postAction(undefined, "setBotConfig", { data });
+export const registerZaloWebhook = () => postAction(undefined, "registerZaloWebhook", {});
+export const testGeminiKey = () => postAction(undefined, "testGeminiKey", {});
