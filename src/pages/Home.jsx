@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { FolderOpen, Settings, ArrowRight } from "lucide-react";
 import GlassCard from "../components/GlassCard";
+import Calendar from "../components/Calendar";
 
 const shortcuts = [
   {
@@ -34,24 +35,28 @@ function Home() {
         </p>
       </header>
 
-      <main className="mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2">
-        {shortcuts.map(({ to, title, description, icon: Icon, accent }) => (
-          <Link key={to} to={to}>
-            <GlassCard accent={accent}>
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
-                <Icon className="h-7 w-7" strokeWidth={2} />
-              </div>
-              <div className="relative flex flex-col gap-1.5">
-                <h2 className="text-xl font-semibold text-white">{title}</h2>
-                <p className="text-sm leading-relaxed text-slate-300">{description}</p>
-              </div>
-              <div className="relative mt-auto flex items-center gap-2 text-sm font-medium text-emerald-300">
-                Xem ngay
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2.2} />
-              </div>
-            </GlassCard>
-          </Link>
-        ))}
+      <main className="mt-12 flex flex-col gap-6">
+        <Calendar />
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          {shortcuts.map(({ to, title, description, icon: Icon, accent }) => (
+            <Link key={to} to={to}>
+              <GlassCard accent={accent}>
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/10">
+                  <Icon className="h-7 w-7" strokeWidth={2} />
+                </div>
+                <div className="relative flex flex-col gap-1.5">
+                  <h2 className="text-xl font-semibold text-white">{title}</h2>
+                  <p className="text-sm leading-relaxed text-slate-300">{description}</p>
+                </div>
+                <div className="relative mt-auto flex items-center gap-2 text-sm font-medium text-emerald-300">
+                  Xem ngay
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" strokeWidth={2.2} />
+                </div>
+              </GlassCard>
+            </Link>
+          ))}
+        </div>
       </main>
 
       <footer className="mt-auto pt-16 text-center text-sm text-slate-500">
