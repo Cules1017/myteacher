@@ -53,6 +53,8 @@ body {
   background-color: var(--color-bg-base);
   color: var(--color-text-base);
   transition: background-color 0.3s ease, color 0.3s ease;
+  touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
 
 /* ==================
