@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Plus, Pencil, Trash2, Check, X, Loader2, MessageSquare, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Check, X, Loader2, MessageSquare, ChevronRight, Search } from "lucide-react";
 import { isConfigured } from "../../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
 import LopHocTabs from "../../components/lop-hoc/LopHocTabs";
 import LoadingState from "../../components/LoadingState";
 import ConfirmModal from "../../components/ConfirmModal";
+import { normalizeText } from "../../utils/text";
 
 const PHAN_LOAI = [
   { key: "tich-cuc", label: "Tích cực", emoji: "✅", color: "bg-emerald-100 dark:bg-emerald-400/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-400/30" },
@@ -27,6 +28,8 @@ function formatDateTime(isoString) {
 
 // ── Màn 1: Danh sách học sinh ───────────────────────────────────────────────
 function StudentList({ students, comments, onSelect }) {
+  const [search, setSearch] = useState("");
+
   const countByStudent = useMemo(() => {
     const map = {};
     (comments || []).forEach((c) => {
@@ -39,42 +42,65 @@ function StudentList({ students, comments, onSelect }) {
     return map;
   }, [comments]);
 
+  const filteredStudents = useMemo(() => {
+    if (!search.trim()) return students;
+    const q = normalizeText(search.trim());
+    return students.filter(s => normalizeText(s.hoVaTen || "").includes(q));
+  }, [students, search]);
+
   return (
-    <div className="flex flex-col gap-3">
-      {students.map((s, idx) => {
-        const info = countByStudent[s.id];
-        const latest = info?.latest;
-        const pl = latest ? getPhanLoai(latest.phanLoai) : null;
-        return (
-          <button
-            key={s.id}
-            onClick={() => onSelect(s)}
-            className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 text-left transition-all hover:bg-surface-hover hover:border-primary-300 dark:hover:border-primary-400/50"
-          >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/20 text-sm font-bold text-primary-700 dark:text-primary-300">
-              {idx + 1}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-text-base truncate">{s.hoVaTen}</p>
-              {latest ? (
-                <p className="text-xs text-text-muted truncate mt-0.5">
-                  {pl?.emoji} {latest.noiDung}
-                </p>
-              ) : (
-                <p className="text-xs text-text-muted mt-0.5">Chưa có nhận xét</p>
-              )}
-            </div>
-            <div className="flex flex-col items-end gap-1 shrink-0">
-              {info?.total > 0 && (
-                <span className="rounded-full bg-primary-100 dark:bg-primary-500/20 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-300">
-                  {info.total}
-                </span>
-              )}
-              <ChevronRight className="h-4 w-4 text-text-muted" />
-            </div>
-          </button>
-        );
-      })}
+    <div className="flex flex-col gap-4">
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
+        <input
+          type="text"
+          placeholder="Tìm học sinh..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full rounded-2xl border border-border bg-surface py-3 pl-10 pr-4 text-sm text-text-base outline-none transition-colors focus:border-primary-500"
+        />
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {filteredStudents.length === 0 ? (
+          <p className="text-center text-sm text-text-muted py-8">Không tìm thấy học sinh.</p>
+        ) : (
+          filteredStudents.map((s, idx) => {
+            const info = countByStudent[s.id];
+            const latest = info?.latest;
+            const pl = latest ? getPhanLoai(latest.phanLoai) : null;
+            return (
+              <button
+                key={s.id}
+                onClick={() => onSelect(s)}
+                className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 text-left transition-all hover:bg-surface-hover hover:border-primary-300 dark:hover:border-primary-400/50"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/20 text-sm font-bold text-primary-700 dark:text-primary-300">
+                  {students.findIndex(x => x.id === s.id) + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-text-base truncate">{s.hoVaTen}</p>
+                  {latest ? (
+                    <p className="text-xs text-text-muted truncate mt-0.5">
+                      {pl?.emoji} {latest.noiDung}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-text-muted mt-0.5">Chưa có nhận xét</p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  {info?.total > 0 && (
+                    <span className="rounded-full bg-primary-100 dark:bg-primary-500/20 px-2 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-300">
+                      {info.total}
+                    </span>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-text-muted" />
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
     </div>
   );
 }
