@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState, useMemo } from "react";
-import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3, Wallet, BookOpen, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Search, Eye, EyeOff, Columns3, Wallet, BookOpen, Check, Copy, Info } from "lucide-react";
 import LoadingState from "../../components/LoadingState";
 import { isConfigured } from "../../services/sheetApi";
 import { useGetRowsQuery, useCreateRowMutation, useUpdateRowMutation, useDeleteRowMutation } from "../../store/sheetApi";
@@ -93,6 +93,7 @@ function HocSinh() {
   // Quick action modals
   const [quyThuModal, setQuyThuModal] = useState(null); // { student }
   const [nhapDiemModal, setNhapDiemModal] = useState(null); // { student }
+  const [viewingStudent, setViewingStudent] = useState(null); // student row
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRow, setEditingRow] = useState(null);
@@ -100,6 +101,7 @@ function HocSinh() {
   const [formError, setFormError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchField, setSearchField] = useState("hoVaTen");
@@ -219,6 +221,26 @@ function HocSinh() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleCopyClipboard = (row) => {
+    const lines = [];
+    lines.push(`Học sinh: ${row.hoVaTen || "Trống"}`);
+    
+    TABLE_COLUMNS.forEach(col => {
+      if (col.key === "stt" || col.key === "hoVaTen") return;
+      if (row[col.key] !== undefined && row[col.key] !== "") {
+         lines.push(`- ${col.label}: ${row[col.key]}`);
+      }
+    });
+
+    const text = lines.join("\n");
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(row.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    }).catch(err => {
+      window.alert("Không thể copy: " + err.message);
+    });
   };
 
   const normalizedSearch = normalizeText(searchTerm);
@@ -398,6 +420,24 @@ function HocSinh() {
                                   Sửa
                                 </button>
                                 <button
+                                  onClick={() => setViewingStudent(row)}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-indigo-600 dark:text-indigo-400 transition-colors hover:bg-indigo-400/10 sm:rounded-full"
+                                >
+                                  <Info className="h-4 w-4" strokeWidth={2} />
+                                  Chi tiết
+                                </button>
+                                <button
+                                  onClick={() => handleCopyClipboard(row)}
+                                  className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-purple-600 dark:text-purple-400 transition-colors hover:bg-purple-400/10 sm:rounded-full"
+                                >
+                                  {copiedId === row.id ? (
+                                    <Check className="h-4 w-4" strokeWidth={2} />
+                                  ) : (
+                                    <Copy className="h-4 w-4" strokeWidth={2} />
+                                  )}
+                                  {copiedId === row.id ? "Đã chép" : "Sao chép"}
+                                </button>
+                                <button
                                   onClick={() => setQuyThuModal({ student: row })}
                                   className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-emerald-600 dark:text-emerald-400 transition-colors hover:bg-emerald-400/10 sm:rounded-full"
                                 >
@@ -458,6 +498,15 @@ function HocSinh() {
           saving={saving}
           error={formError}
           isEditing={Boolean(editingRow)}
+        />
+      )}
+
+      {viewingStudent && (
+        <StudentDetailsModal
+          student={viewingStudent}
+          onClose={() => setViewingStudent(null)}
+          onCopy={() => handleCopyClipboard(viewingStudent)}
+          copied={copiedId === viewingStudent.id}
         />
       )}
 
@@ -803,6 +852,49 @@ function QuickNhapDiemModal({ student, monhocRows, cotdiemRows, diemRows, onClos
             )}
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function StudentDetailsModal({ student, onClose, onCopy, copied }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-3xl border border-border bg-bg-base/95 p-6 shadow-2xl backdrop-blur-2xl sm:p-8">
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-text-base">{student.hoVaTen}</h2>
+            <p className="text-sm text-text-muted mt-1">Thông tin chi tiết học sinh</p>
+          </div>
+          <button onClick={onClose} className="rounded-full p-2 text-text-muted hover:bg-surface-hover">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          {TABLE_COLUMNS.filter(c => c.key !== 'stt' && c.key !== 'hoVaTen').map((col) => {
+            const val = student[col.key];
+            if (val === undefined || val === "") return null;
+            return (
+              <div key={col.key} className="flex flex-col rounded-2xl border border-border bg-surface px-4 py-3">
+                <span className="text-xs font-medium text-text-muted uppercase tracking-wider">{col.label}</span>
+                <span className="mt-1 text-sm font-semibold text-text-base">
+                  {typeof val === 'boolean' ? (val ? 'Có' : 'Không') : val}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 flex gap-3">
+          <button
+            onClick={onCopy}
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary-500 px-6 py-3 font-medium text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-600 active:translate-y-0"
+          >
+            {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+            {copied ? "Đã chép" : "Chép vào clipboard"}
+          </button>
+        </div>
       </div>
     </div>
   );
