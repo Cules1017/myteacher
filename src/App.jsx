@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Documents from "./pages/Documents";
 import Settings from "./pages/Settings";
+import HocSinh from "./pages/lop-hoc/HocSinh";
 
 function App() {
   return (
@@ -11,6 +12,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/tai-lieu" element={<Documents />} />
+          <Route path="/lop-hoc" element={<Navigate to="/lop-hoc/hoc-sinh" replace />} />
+          <Route path="/lop-hoc/hoc-sinh" element={<HocSinh />} />
           <Route path="/cai-dat" element={<Settings />} />
         </Routes>
       </Layout>

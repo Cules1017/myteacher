@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Environment / secrets
+.env
+
+# Apps Script local deployment config (contains your Script ID)
+apps-script/.clasp.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

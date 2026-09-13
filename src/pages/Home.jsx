@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { FolderOpen, Settings, ArrowRight } from "lucide-react";
+import { FolderOpen, Users, Settings, ArrowRight } from "lucide-react";
 import GlassCard from "../components/GlassCard";
 import Calendar from "../components/Calendar";
 
@@ -10,6 +10,13 @@ const shortcuts = [
     description: "Giáo án, bài giảng và tài nguyên giảng dạy.",
     icon: FolderOpen,
     accent: "from-blue-500 to-emerald-400",
+  },
+  {
+    to: "/lop-hoc",
+    title: "Lớp học",
+    description: "Quản lý danh sách học sinh trong lớp.",
+    icon: Users,
+    accent: "from-amber-400 to-rose-400",
   },
   {
     to: "/cai-dat",
@@ -38,7 +45,7 @@ function Home() {
       <main className="mt-12 flex flex-col gap-6">
         <Calendar />
 
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {shortcuts.map(({ to, title, description, icon: Icon, accent }) => (
             <Link key={to} to={to}>
               <GlassCard accent={accent}>

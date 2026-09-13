@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, FolderOpen, Settings } from "lucide-react";
+import { Home, FolderOpen, Users, Settings } from "lucide-react";
 
 const items = [
   { to: "/", label: "Trang chủ", icon: Home, end: true },
   { to: "/tai-lieu", label: "Tài liệu", icon: FolderOpen },
+  { to: "/lop-hoc", label: "Lớp học", icon: Users },
   { to: "/cai-dat", label: "Cài đặt", icon: Settings },
 ];
 
